@@ -15,3 +15,6 @@ export * from './field.js';
 
 // Webhook event types
 export * from './events.js';
+
+// Portal types
+export * from './portal.js';

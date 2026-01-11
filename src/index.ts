@@ -2,6 +2,10 @@
 export { DispatchTickets } from './client.js';
 export type { DispatchTicketsConfig } from './client.js';
 
+// Portal client
+export { DispatchPortal } from './portal.js';
+export type { DispatchPortalConfig } from './portal.js';
+
 // Errors
 export {
   DispatchTicketsError,
