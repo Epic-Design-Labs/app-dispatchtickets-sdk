@@ -303,29 +303,35 @@ await client.fields.delete('ws_abc123', 'ticket', 'order_id');
 
 ## Error Handling
 
+Use type guards for clean error handling:
+
 ```typescript
 import {
   DispatchTickets,
-  AuthenticationError,
-  RateLimitError,
-  ValidationError,
-  NotFoundError,
+  isNotFoundError,
+  isAuthenticationError,
+  isRateLimitError,
+  isValidationError,
 } from '@dispatchtickets/sdk';
 
 try {
   await client.tickets.get('ws_abc123', 'tkt_invalid');
 } catch (error) {
-  if (error instanceof NotFoundError) {
+  if (isNotFoundError(error)) {
     console.log('Ticket not found');
-  } else if (error instanceof AuthenticationError) {
+    console.log('Request ID:', error.requestId); // For debugging with support
+  } else if (isAuthenticationError(error)) {
     console.log('Invalid API key');
-  } else if (error instanceof RateLimitError) {
+  } else if (isRateLimitError(error)) {
     console.log(`Rate limited. Retry after ${error.retryAfter} seconds`);
-  } else if (error instanceof ValidationError) {
+    console.log(`Limit: ${error.limit}, Remaining: ${error.remaining}`);
+  } else if (isValidationError(error)) {
     console.log('Validation errors:', error.errors);
   }
 }
 ```
+
+All errors include a `requestId` for debugging with support.
 
 ## Webhook Events
 

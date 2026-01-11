@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-01-10
+
+### Added
+
+- **Request ID in errors** - All API errors now include `requestId` for debugging with support
+  ```typescript
+  try {
+    await client.tickets.get(brandId, 'invalid');
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      console.log('Request ID:', error.requestId);
+    }
+  }
+  ```
+
+- **Rate limit info** - Full rate limit details in `RateLimitError` and accessible via `client` after requests
+  - `error.limit` - Maximum requests allowed
+  - `error.remaining` - Remaining requests in window
+  - `error.reset` - Unix timestamp when limit resets
+
+- **Error type guards** - Runtime type checking for all error classes
+  - `isDispatchTicketsError()`, `isAuthenticationError()`, `isRateLimitError()`
+  - `isValidationError()`, `isNotFoundError()`, `isConflictError()`
+  - `isServerError()`, `isTimeoutError()`, `isNetworkError()`
+  ```typescript
+  import { isNotFoundError, isValidationError } from '@dispatchtickets/sdk';
+
+  try {
+    await client.tickets.get(brandId, ticketId);
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      console.log('Ticket not found');
+    } else if (isValidationError(error)) {
+      console.log('Validation errors:', error.errors);
+    }
+  }
+  ```
+
 ## [0.3.0] - 2026-01-10
 
 ### Added

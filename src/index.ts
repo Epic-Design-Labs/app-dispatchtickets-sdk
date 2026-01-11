@@ -13,7 +13,20 @@ export {
   ServerError,
   TimeoutError,
   NetworkError,
+  // Type guards
+  isDispatchTicketsError,
+  isAuthenticationError,
+  isRateLimitError,
+  isValidationError,
+  isNotFoundError,
+  isConflictError,
+  isServerError,
+  isTimeoutError,
+  isNetworkError,
 } from './errors.js';
+
+// Rate limit info type
+export type { RateLimitInfo } from './utils/http.js';
 
 // Types
 export * from './types/index.js';

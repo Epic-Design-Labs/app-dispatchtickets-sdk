@@ -44,15 +44,55 @@ interface ApiErrorResponse {
 }
 
 /**
+ * Rate limit information from response headers
+ */
+export interface RateLimitInfo {
+  /** Maximum requests allowed in the current window */
+  limit: number;
+  /** Remaining requests in the current window */
+  remaining: number;
+  /** Unix timestamp (seconds) when the rate limit resets */
+  reset: number;
+}
+
+/**
+ * Response wrapper with rate limit info
+ */
+export interface ResponseWithRateLimit<T> {
+  data: T;
+  rateLimit?: RateLimitInfo;
+  requestId?: string;
+}
+
+/**
  * HTTP client with retry logic and error handling
  */
 export class HttpClient {
   private readonly config: HttpClientConfig;
   private readonly fetchFn: FetchFunction;
 
+  /** Rate limit info from the last response */
+  private _lastRateLimit?: RateLimitInfo;
+  /** Request ID from the last response */
+  private _lastRequestId?: string;
+
   constructor(config: HttpClientConfig) {
     this.config = config;
     this.fetchFn = config.fetch ?? fetch;
+  }
+
+  /**
+   * Get rate limit info from the last response
+   */
+  get lastRateLimit(): RateLimitInfo | undefined {
+    return this._lastRateLimit;
+  }
+
+  /**
+   * Get request ID from the last response
+   */
+  get lastRequestId(): string | undefined {
+    return this._lastRequestId;
   }
 
   /**
@@ -116,6 +156,18 @@ export class HttpClient {
     }
 
     throw lastError || new NetworkError('Request failed after retries');
+  }
+
+  /**
+   * Execute request and return response with rate limit info
+   */
+  async requestWithRateLimit<T>(options: RequestOptions): Promise<ResponseWithRateLimit<T>> {
+    const data = await this.request<T>(options);
+    return {
+      data,
+      rateLimit: this._lastRateLimit,
+      requestId: this._lastRequestId,
+    };
   }
 
   private buildUrl(path: string, query?: Record<string, string | number | boolean | undefined>): string {
@@ -188,9 +240,37 @@ export class HttpClient {
     }
   }
 
+  private extractRateLimitInfo(response: Response): RateLimitInfo | undefined {
+    const limit = response.headers.get('x-ratelimit-limit');
+    const remaining = response.headers.get('x-ratelimit-remaining');
+    const reset = response.headers.get('x-ratelimit-reset');
+
+    if (limit && remaining && reset) {
+      return {
+        limit: parseInt(limit, 10),
+        remaining: parseInt(remaining, 10),
+        reset: parseInt(reset, 10),
+      };
+    }
+
+    return undefined;
+  }
+
   private async handleResponse<T>(response: Response): Promise<T> {
     const contentType = response.headers.get('content-type');
     const isJson = contentType?.includes('application/json');
+
+    // Extract request ID and rate limit info
+    const requestId = response.headers.get('x-request-id') ?? undefined;
+    const rateLimitInfo = this.extractRateLimitInfo(response);
+
+    // Store for access via getters
+    this._lastRequestId = requestId;
+    this._lastRateLimit = rateLimitInfo;
+
+    if (this.config.debug && requestId) {
+      console.log(`[DispatchTickets] Request ID: ${requestId}`);
+    }
 
     if (response.ok) {
       if (response.status === 204 || !isJson) {
@@ -213,23 +293,34 @@ export class HttpClient {
 
     switch (response.status) {
       case 401:
-        throw new AuthenticationError(message);
+        throw new AuthenticationError(message, requestId);
       case 400:
       case 422:
-        throw new ValidationError(message, errorData.errors);
+        throw new ValidationError(message, errorData.errors, requestId);
       case 404:
-        throw new NotFoundError(message);
+        throw new NotFoundError(message, undefined, undefined, requestId);
       case 409:
-        throw new ConflictError(message);
+        throw new ConflictError(message, requestId);
       case 429: {
         const retryAfter = response.headers.get('retry-after');
-        throw new RateLimitError(message, retryAfter ? parseInt(retryAfter, 10) : undefined);
+        throw new RateLimitError(
+          message,
+          retryAfter ? parseInt(retryAfter, 10) : undefined,
+          requestId,
+          rateLimitInfo
+        );
       }
       default:
         if (response.status >= 500) {
-          throw new ServerError(message, response.status);
+          throw new ServerError(message, response.status, requestId);
         }
-        throw new DispatchTicketsError(message, 'api_error', response.status, errorData as Record<string, unknown>);
+        throw new DispatchTicketsError(
+          message,
+          'api_error',
+          response.status,
+          errorData as Record<string, unknown>,
+          requestId
+        );
     }
   }
 
