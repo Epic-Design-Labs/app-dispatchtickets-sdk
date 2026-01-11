@@ -1,0 +1,46 @@
+{
+  "name": "@dispatchtickets/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for Dispatch Tickets API",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "dispatch-tickets",
+    "ticketing",
+    "support",
+    "api",
+    "sdk"
+  ],
+  "author": "Epic Design Labs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Epic-Design-Labs/app-dispatchtickets-sdk.git"
+  },
+  "homepage": "https://dispatchtickets.com",
+  "devDependencies": {
+    "@types/node": "^25.0.6",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
