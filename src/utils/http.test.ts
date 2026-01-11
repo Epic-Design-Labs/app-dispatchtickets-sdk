@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { HttpClient } from './http.js';
 import {
   AuthenticationError,
@@ -507,7 +507,7 @@ describe('HttpClient', () => {
 
     it('should distinguish user abort from timeout', async () => {
       const controller = new AbortController();
-      const mockFetch = vi.fn().mockImplementation((_url, options) => {
+      const mockFetch = vi.fn().mockImplementation((_url, _options) => {
         // Simulate user abort
         controller.abort();
         const error = new Error('Aborted');

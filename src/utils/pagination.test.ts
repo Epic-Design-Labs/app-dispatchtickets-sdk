@@ -10,7 +10,7 @@ describe('createPaginatedIterator', () => {
     } as PaginatedResponse<{ id: number }>);
 
     const items: { id: number }[] = [];
-    for await (const item of createPaginatedIterator(fetchPage)) {
+    for await (const item of createPaginatedIterator<{ id: number }>(fetchPage)) {
       items.push(item);
     }
 
@@ -35,7 +35,7 @@ describe('createPaginatedIterator', () => {
       });
 
     const items: { id: number }[] = [];
-    for await (const item of createPaginatedIterator(fetchPage)) {
+    for await (const item of createPaginatedIterator<{ id: number }>(fetchPage)) {
       items.push(item);
     }
 
@@ -73,7 +73,7 @@ describe('createPaginatedIterator', () => {
       });
 
     const items: { id: number }[] = [];
-    for await (const item of createPaginatedIterator(fetchPage)) {
+    for await (const item of createPaginatedIterator<{ id: number }>(fetchPage)) {
       items.push(item);
     }
 
@@ -93,7 +93,7 @@ describe('createPaginatedIterator', () => {
       });
 
     const items: { id: number }[] = [];
-    for await (const item of createPaginatedIterator(fetchPage)) {
+    for await (const item of createPaginatedIterator<{ id: number }>(fetchPage)) {
       items.push(item);
       if (item.id === 2) break;
     }

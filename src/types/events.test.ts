@@ -33,7 +33,9 @@ describe('parseWebhookEvent', () => {
   it('should parse a valid ticket.created event from object', () => {
     const event = parseWebhookEvent(validTicketCreatedEvent);
     expect(event.event).toBe('ticket.created');
-    expect(event.data.id).toBe('tkt_789');
+    if (isTicketCreatedEvent(event)) {
+      expect(event.data.id).toBe('tkt_789');
+    }
   });
 
   it('should parse a valid event from JSON string', () => {
