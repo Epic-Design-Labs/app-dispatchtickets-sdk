@@ -12,3 +12,6 @@ export * from './customer.js';
 export * from './category.js';
 export * from './tag.js';
 export * from './field.js';
+
+// Webhook event types
+export * from './events.js';

@@ -85,6 +85,10 @@ await client.accounts.revokeApiKey('key_abc');
 ### Brands
 
 ```typescript
+// Get inbound email address for a brand
+const inboundEmail = client.brands.getInboundEmail('br_abc123');
+// Returns: br_abc123@inbound.dispatchtickets.com
+
 // Create a brand
 const brand = await client.brands.create({
   name: 'Acme Support',
@@ -323,6 +327,43 @@ try {
 }
 ```
 
+## Webhook Events
+
+Handle webhook events with full type safety:
+
+```typescript
+import {
+  DispatchTickets,
+  parseWebhookEvent,
+  isTicketCreatedEvent,
+  isTicketUpdatedEvent,
+  isCommentCreatedEvent,
+} from '@dispatchtickets/sdk';
+
+// Parse and validate webhook payload
+const event = parseWebhookEvent(req.body);
+
+// Use type guards for type-safe event handling
+if (isTicketCreatedEvent(event)) {
+  // event.data is typed as TicketCreatedData
+  console.log('New ticket:', event.data.title);
+  console.log('Priority:', event.data.priority);
+  console.log('Customer:', event.data.customerEmail);
+}
+
+if (isTicketUpdatedEvent(event)) {
+  // event.data is typed as TicketUpdatedData
+  console.log('Ticket updated:', event.data.id);
+  console.log('Changed fields:', event.data.changes);
+}
+
+if (isCommentCreatedEvent(event)) {
+  // event.data is typed as CommentCreatedData
+  console.log('New comment on', event.data.ticketNumber);
+  console.log('Author:', event.data.comment.authorType);
+}
+```
+
 ## Webhook Verification
 
 ```typescript
@@ -377,6 +418,14 @@ const brands = await client.brands.list();
 expect(brands).toHaveLength(1);
 expect(mockFetch).toHaveBeenCalled();
 ```
+
+## Examples
+
+See the `/examples` directory for complete working examples:
+
+- **[express-webhook.ts](./examples/express-webhook.ts)** - Express.js webhook handler with signature verification
+- **[nextjs-api-route.ts](./examples/nextjs-api-route.ts)** - Next.js App Router webhook handler
+- **[basic-usage.ts](./examples/basic-usage.ts)** - Common SDK operations (tickets, comments, pagination)
 
 ## Links
 

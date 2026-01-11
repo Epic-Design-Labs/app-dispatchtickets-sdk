@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-10
+
+### Added
+
+- **Typed webhook events** - Full TypeScript types for webhook payloads
+  - `TicketCreatedEvent`, `TicketUpdatedEvent`, `CommentCreatedEvent`
+  - Type guards: `isTicketCreatedEvent()`, `isTicketUpdatedEvent()`, `isCommentCreatedEvent()`
+  - `parseWebhookEvent()` - Parse and validate webhook payloads with full type inference
+  ```typescript
+  const event = parseWebhookEvent(req.body);
+  if (isTicketCreatedEvent(event)) {
+    console.log(event.data.title); // Fully typed!
+  }
+  ```
+
+- **Examples** - Real-world usage examples in `/examples`
+  - `express-webhook.ts` - Express.js webhook handler with signature verification
+  - `nextjs-api-route.ts` - Next.js App Router webhook handler
+  - `basic-usage.ts` - Common SDK operations (tickets, comments, pagination)
+
+- **Inbound email helper** - Get inbound email addresses for brands
+  ```typescript
+  const email = client.brands.getInboundEmail('br_123');
+  // Returns: br_123@inbound.dispatchtickets.com
+  ```
+
 ## [0.2.0] - 2026-01-10
 
 ### Added

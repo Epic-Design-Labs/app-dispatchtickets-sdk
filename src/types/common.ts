@@ -54,12 +54,14 @@ export type AuthorType = 'CUSTOMER' | 'AGENT' | 'SYSTEM';
 export type AttachmentStatus = 'PENDING' | 'UPLOADED' | 'FAILED';
 
 /**
- * Webhook event types
+ * Webhook event type strings (for subscription)
+ * @deprecated Use WebhookEventType from events.ts for typed event handling
  */
-export type WebhookEvent =
+export type WebhookEventName =
   | 'ticket.created'
   | 'ticket.updated'
   | 'ticket.deleted'
+  | 'ticket.comment.created'
   | 'comment.created'
   | 'comment.updated'
   | 'comment.deleted'

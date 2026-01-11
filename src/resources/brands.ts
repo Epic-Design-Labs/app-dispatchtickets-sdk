@@ -59,4 +59,27 @@ export class BrandsResource extends BaseResource {
   async updateSchema(brandId: string, schema: Record<string, unknown>): Promise<Record<string, unknown>> {
     return this._put<Record<string, unknown>>(`/brands/${brandId}/schema`, schema);
   }
+
+  /**
+   * Get the inbound email address for a brand
+   *
+   * Emails sent to this address will automatically create tickets.
+   *
+   * @param brandId - The brand ID
+   * @param domain - Optional custom inbound domain (default: inbound.dispatchtickets.com)
+   * @returns The inbound email address
+   *
+   * @example
+   * ```typescript
+   * const email = client.brands.getInboundEmail('br_abc123');
+   * // Returns: br_abc123@inbound.dispatchtickets.com
+   *
+   * // With custom domain:
+   * const customEmail = client.brands.getInboundEmail('br_abc123', 'support.mycompany.com');
+   * // Returns: br_abc123@support.mycompany.com
+   * ```
+   */
+  getInboundEmail(brandId: string, domain = 'inbound.dispatchtickets.com'): string {
+    return `${brandId}@${domain}`;
+  }
 }

@@ -1,4 +1,4 @@
-import type { WebhookEvent } from './common.js';
+import type { WebhookEventName } from './common.js';
 
 /**
  * Webhook resource
@@ -7,7 +7,7 @@ export interface Webhook {
   id: string;
   brandId: string;
   url: string;
-  events: WebhookEvent[];
+  events: WebhookEventName[];
   enabled: boolean;
   failureCount: number;
   lastTriggered?: string;
@@ -22,7 +22,7 @@ export interface Webhook {
 export interface CreateWebhookInput {
   url: string;
   secret: string;
-  events: WebhookEvent[];
+  events: WebhookEventName[];
 }
 
 /**
@@ -31,7 +31,7 @@ export interface CreateWebhookInput {
 export interface WebhookDelivery {
   id: string;
   webhookId: string;
-  event: WebhookEvent;
+  event: WebhookEventName;
   payload: Record<string, unknown>;
   status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'RETRYING';
   attempts: number;
