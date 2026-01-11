@@ -20,6 +20,8 @@ export interface Brand {
   autoresponseBody?: string;
   fromName?: string;
   fromEmail?: string;
+  /** Allowed origins for portal API CORS */
+  portalOrigins: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -52,6 +54,8 @@ export interface UpdateBrandInput {
   autoresponseBody?: string;
   metadata?: Record<string, unknown>;
   ticketSchema?: Record<string, unknown>;
+  /** Allowed origins for portal API CORS. Empty array = block all cross-origin requests. */
+  portalOrigins?: string[];
 }
 
 /**
