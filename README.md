@@ -1,6 +1,9 @@
 # @dispatchtickets/sdk
 
-Official TypeScript SDK for the Dispatch Tickets API.
+[![npm version](https://img.shields.io/npm/v/@dispatchtickets/sdk.svg)](https://www.npmjs.com/package/@dispatchtickets/sdk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Official TypeScript SDK for the [Dispatch Tickets](https://dispatchtickets.com) API.
 
 ## Installation
 
@@ -36,6 +39,38 @@ await client.comments.create('ws_abc123', ticket.id, {
   authorType: 'AGENT',
 });
 ```
+
+## Portal API (End-User Access)
+
+For customer-facing integrations, use `DispatchPortal` to let end-users view and manage their own tickets:
+
+```typescript
+import { DispatchTickets, DispatchPortal } from '@dispatchtickets/sdk';
+
+// 1. Backend: Generate a portal token for your user
+const admin = new DispatchTickets({ apiKey: 'sk_live_xxx' });
+const { token } = await admin.brands.generatePortalToken('br_xxx', {
+  email: user.email,
+  name: user.name,
+});
+
+// 2. Frontend: Use the token to access tickets
+const portal = new DispatchPortal({ token });
+
+// List user's tickets
+const { data: tickets } = await portal.tickets.list();
+
+// Create a new ticket
+const ticket = await portal.tickets.create({
+  title: 'Help with my order',
+  body: 'Order #12345 has not arrived...',
+});
+
+// Add a comment
+await portal.tickets.addComment(ticket.id, 'Here is more information...');
+```
+
+Portal tokens are scoped to a single customer and expire after 1 hour. See the [Integration Guide](https://dispatchtickets.com/docs/integration) for complete examples.
 
 ## Configuration
 
@@ -477,6 +512,8 @@ This creates a `docs/` folder with HTML documentation for all exported types and
 
 ## Links
 
+- [Website](https://dispatchtickets.com)
+- [Integration Guide](https://dispatchtickets.com/docs/integration)
 - [API Reference (Swagger)](https://dispatch-tickets-api.onrender.com/docs)
 - [GitHub](https://github.com/Epic-Design-Labs/app-dispatchtickets-sdk)
 - [Changelog](./CHANGELOG.md)
