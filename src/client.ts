@@ -1,4 +1,5 @@
-import { HttpClient, HttpClientConfig } from './utils/http.js';
+import { HttpClient, HttpClientConfig, FetchFunction } from './utils/http.js';
+import { AccountsResource } from './resources/accounts.js';
 import { BrandsResource } from './resources/brands.js';
 import { TicketsResource } from './resources/tickets.js';
 import { CommentsResource } from './resources/comments.js';
@@ -42,6 +43,11 @@ export interface DispatchTicketsConfig {
    * @default false
    */
   debug?: boolean;
+
+  /**
+   * Custom fetch implementation for testing/mocking
+   */
+  fetch?: FetchFunction;
 }
 
 /**
@@ -72,6 +78,11 @@ export interface DispatchTicketsConfig {
  */
 export class DispatchTickets {
   private readonly http: HttpClient;
+
+  /**
+   * Accounts resource for managing the current account and API keys
+   */
+  readonly accounts: AccountsResource;
 
   /**
    * Brands (workspaces) resource
@@ -134,11 +145,13 @@ export class DispatchTickets {
       timeout: config.timeout ?? 30000,
       maxRetries: config.maxRetries ?? 3,
       debug: config.debug ?? false,
+      fetch: config.fetch,
     };
 
     this.http = new HttpClient(httpConfig);
 
     // Initialize resources
+    this.accounts = new AccountsResource(this.http);
     this.brands = new BrandsResource(this.http);
     this.tickets = new TicketsResource(this.http);
     this.comments = new CommentsResource(this.http);

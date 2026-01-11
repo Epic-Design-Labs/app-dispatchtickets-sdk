@@ -2,6 +2,7 @@
 export * from './common.js';
 
 // Resource types
+export * from './account.js';
 export * from './brand.js';
 export * from './ticket.js';
 export * from './comment.js';

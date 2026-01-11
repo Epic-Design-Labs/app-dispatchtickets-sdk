@@ -46,10 +46,41 @@ const client = new DispatchTickets({
   timeout: 30000,                // Optional, request timeout in ms
   maxRetries: 3,                 // Optional, retry count for failed requests
   debug: false,                  // Optional, enable debug logging
+  fetch: customFetch,            // Optional, custom fetch for testing
 });
 ```
 
 ## Resources
+
+### Accounts
+
+```typescript
+// Get current account
+const account = await client.accounts.me();
+
+// Get usage statistics
+const usage = await client.accounts.getUsage();
+console.log(`${usage.ticketsThisMonth}/${usage.plan?.ticketLimit} tickets used`);
+
+// List API keys
+const apiKeys = await client.accounts.listApiKeys();
+
+// Create a new API key
+const newKey = await client.accounts.createApiKey({
+  name: 'Production',
+  allBrands: true,  // or brandIds: ['br_123']
+});
+console.log('Save this key:', newKey.key); // Only shown once!
+
+// Update API key scope
+await client.accounts.updateApiKeyScope('key_abc', {
+  allBrands: false,
+  brandIds: ['br_123', 'br_456'],
+});
+
+// Revoke an API key
+await client.accounts.revokeApiKey('key_abc');
+```
 
 ### Brands
 
@@ -321,6 +352,37 @@ app.post('/webhooks', (req, res) => {
   res.status(200).send('OK');
 });
 ```
+
+## Testing
+
+Use the custom `fetch` option to mock API responses in tests:
+
+```typescript
+import { DispatchTickets } from '@dispatchtickets/sdk';
+import { vi } from 'vitest';
+
+const mockFetch = vi.fn().mockResolvedValue({
+  ok: true,
+  status: 200,
+  headers: { get: () => 'application/json' },
+  json: () => Promise.resolve([{ id: 'br_123', name: 'Test' }]),
+});
+
+const client = new DispatchTickets({
+  apiKey: 'sk_test_123',
+  fetch: mockFetch,
+});
+
+const brands = await client.brands.list();
+expect(brands).toHaveLength(1);
+expect(mockFetch).toHaveBeenCalled();
+```
+
+## Links
+
+- [API Reference (Swagger)](https://dispatch-tickets-api.onrender.com/docs)
+- [GitHub](https://github.com/Epic-Design-Labs/app-dispatchtickets-sdk)
+- [Changelog](./CHANGELOG.md)
 
 ## License
 

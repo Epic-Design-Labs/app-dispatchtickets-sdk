@@ -10,12 +10,21 @@ import {
   NetworkError,
 } from '../errors.js';
 
+/**
+ * Custom fetch function type
+ */
+export type FetchFunction = typeof fetch;
+
 export interface HttpClientConfig {
   baseUrl: string;
   apiKey: string;
   timeout: number;
   maxRetries: number;
   debug?: boolean;
+  /**
+   * Custom fetch implementation for testing/mocking
+   */
+  fetch?: FetchFunction;
 }
 
 export interface RequestOptions {
@@ -39,9 +48,11 @@ interface ApiErrorResponse {
  */
 export class HttpClient {
   private readonly config: HttpClientConfig;
+  private readonly fetchFn: FetchFunction;
 
   constructor(config: HttpClientConfig) {
     this.config = config;
+    this.fetchFn = config.fetch ?? fetch;
   }
 
   /**
@@ -156,7 +167,7 @@ export class HttpClient {
         }
       }
 
-      const response = await fetch(url, {
+      const response = await this.fetchFn(url, {
         method,
         headers,
         body: body ? JSON.stringify(body) : undefined,

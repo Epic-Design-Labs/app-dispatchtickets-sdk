@@ -1,0 +1,82 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.2.0] - 2026-01-10
+
+### Added
+
+- **Accounts resource** - Manage current account, usage stats, and API keys
+  - `client.accounts.me()` - Get current account
+  - `client.accounts.getUsage()` - Get usage statistics
+  - `client.accounts.listApiKeys()` - List API keys
+  - `client.accounts.createApiKey()` - Create new API key
+  - `client.accounts.updateApiKeyScope()` - Update API key brand scope
+  - `client.accounts.revokeApiKey()` - Revoke an API key
+
+- **Custom fetch support** - Inject custom fetch implementation for testing/mocking
+  ```typescript
+  const client = new DispatchTickets({
+    apiKey: 'sk_...',
+    fetch: myCustomFetch,
+  });
+  ```
+
+- **Test suite** - Comprehensive tests using Vitest
+  - Error classes tests
+  - HTTP client tests (retry logic, error handling)
+  - Webhook signature verification tests
+  - Pagination iterator tests
+  - Client initialization tests
+
+- **CI/CD workflows**
+  - Automated testing on push/PR (Node 18, 20, 22)
+  - Automated npm publishing on version tags
+
+## [0.1.0] - 2026-01-10
+
+### Added
+
+- Initial release
+- **Client** - Main `DispatchTickets` class with configurable options
+  - `apiKey` - Required API key
+  - `baseUrl` - Custom API base URL
+  - `timeout` - Request timeout (default 30s)
+  - `maxRetries` - Retry count (default 3)
+  - `debug` - Enable request logging
+
+- **Resources**
+  - `brands` - Brand/workspace management (list, get, create, update, delete)
+  - `tickets` - Ticket operations with async pagination
+  - `comments` - Comment CRUD
+  - `attachments` - File upload with presigned URLs
+  - `webhooks` - Webhook subscription management
+  - `categories` - Category management
+  - `tags` - Tag management
+  - `customers` - Customer management
+  - `fields` - Custom field definitions
+
+- **Error classes**
+  - `DispatchTicketsError` - Base error class
+  - `AuthenticationError` - 401 errors
+  - `RateLimitError` - 429 errors with retry-after
+  - `ValidationError` - 400/422 errors with field details
+  - `NotFoundError` - 404 errors
+  - `ConflictError` - 409 errors
+  - `ServerError` - 5xx errors
+  - `TimeoutError` - Request timeout
+  - `NetworkError` - Network failures
+
+- **Utilities**
+  - `DispatchTickets.webhooks.verifySignature()` - HMAC-SHA256 webhook verification
+  - `DispatchTickets.webhooks.generateSignature()` - Generate signatures for testing
+  - Async pagination iterator for ticket listing
+  - Automatic retry with exponential backoff
+
+- **Build**
+  - Dual ESM/CJS output
+  - TypeScript declarations
+  - Zero runtime dependencies
