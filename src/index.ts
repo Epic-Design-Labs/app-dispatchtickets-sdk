@@ -25,8 +25,17 @@ export {
   isNetworkError,
 } from './errors.js';
 
-// Rate limit info type
-export type { RateLimitInfo } from './utils/http.js';
+// HTTP types (hooks, retry config, etc.)
+export type {
+  RateLimitInfo,
+  RetryConfig,
+  Hooks,
+  RequestContext,
+  ResponseContext,
+} from './utils/http.js';
+
+// API request options
+export type { ApiRequestOptions } from './resources/base.js';
 
 // Types
 export * from './types/index.js';

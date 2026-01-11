@@ -21,6 +21,9 @@ npm-debug.log*
 # Test
 coverage/
 
+# Documentation (generated)
+docs/
+
 # Environment
 .env
 .env.local

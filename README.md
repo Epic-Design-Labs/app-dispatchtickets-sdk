@@ -44,10 +44,42 @@ const client = new DispatchTickets({
   apiKey: 'sk_live_...',        // Required
   baseUrl: 'https://...',        // Optional, default: production API
   timeout: 30000,                // Optional, request timeout in ms
-  maxRetries: 3,                 // Optional, retry count for failed requests
   debug: false,                  // Optional, enable debug logging
   fetch: customFetch,            // Optional, custom fetch for testing
+  retry: {                       // Optional, fine-grained retry config
+    maxRetries: 3,
+    retryableStatuses: [429, 500, 502, 503, 504],
+    initialDelayMs: 1000,
+    maxDelayMs: 30000,
+  },
+  hooks: {                       // Optional, observability hooks
+    onRequest: (ctx) => console.log(`${ctx.method} ${ctx.url}`),
+    onResponse: (ctx) => console.log(`${ctx.status} in ${ctx.durationMs}ms`),
+    onError: (error) => Sentry.captureException(error),
+    onRetry: (ctx, error, delay) => console.log(`Retrying in ${delay}ms`),
+  },
 });
+```
+
+### Request Cancellation
+
+Cancel long-running requests with an AbortController:
+
+```typescript
+const controller = new AbortController();
+
+// Cancel after 5 seconds
+setTimeout(() => controller.abort(), 5000);
+
+try {
+  const page = await client.tickets.listPage('ws_abc', {}, {
+    signal: controller.signal,
+  });
+} catch (error) {
+  if (error.message.includes('aborted')) {
+    console.log('Request was cancelled');
+  }
+}
 ```
 
 ## Resources
@@ -432,6 +464,16 @@ See the `/examples` directory for complete working examples:
 - **[express-webhook.ts](./examples/express-webhook.ts)** - Express.js webhook handler with signature verification
 - **[nextjs-api-route.ts](./examples/nextjs-api-route.ts)** - Next.js App Router webhook handler
 - **[basic-usage.ts](./examples/basic-usage.ts)** - Common SDK operations (tickets, comments, pagination)
+
+## API Documentation
+
+Generate TypeDoc API documentation locally:
+
+```bash
+npm run docs
+```
+
+This creates a `docs/` folder with HTML documentation for all exported types and methods.
 
 ## Links
 

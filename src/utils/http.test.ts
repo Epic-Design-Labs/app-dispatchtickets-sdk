@@ -371,4 +371,324 @@ describe('HttpClient', () => {
       consoleSpy.mockRestore();
     });
   });
+
+  describe('hooks', () => {
+    it('should call onRequest hook before request', async () => {
+      const onRequest = vi.fn();
+      const mockFetch = createMockFetch([{ status: 200, body: { id: '123' } }]);
+      const client = new HttpClient({
+        ...baseConfig,
+        fetch: mockFetch,
+        hooks: { onRequest },
+      });
+
+      await client.request({ method: 'GET', path: '/test' });
+
+      expect(onRequest).toHaveBeenCalledTimes(1);
+      expect(onRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: 'GET',
+          url: 'https://api.example.com/test',
+          attempt: 0,
+        })
+      );
+    });
+
+    it('should call onResponse hook after successful response', async () => {
+      const onResponse = vi.fn();
+      const mockFetch = createMockFetch([
+        { status: 200, body: { id: '123' }, headers: { 'x-request-id': 'req_123' } },
+      ]);
+      const client = new HttpClient({
+        ...baseConfig,
+        fetch: mockFetch,
+        hooks: { onResponse },
+      });
+
+      await client.request({ method: 'GET', path: '/test' });
+
+      expect(onResponse).toHaveBeenCalledTimes(1);
+      expect(onResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 200,
+          requestId: 'req_123',
+          durationMs: expect.any(Number),
+        })
+      );
+    });
+
+    it('should call onError hook on error', async () => {
+      const onError = vi.fn();
+      const mockFetch = createMockFetch([
+        { status: 404, body: { message: 'Not found' }, headers: { 'content-type': 'application/json' } },
+      ]);
+      const client = new HttpClient({
+        ...baseConfig,
+        maxRetries: 0,
+        fetch: mockFetch,
+        hooks: { onError },
+      });
+
+      await expect(client.request({ method: 'GET', path: '/test' })).rejects.toThrow();
+
+      expect(onError).toHaveBeenCalledTimes(1);
+      expect(onError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ method: 'GET' })
+      );
+    });
+
+    it('should call onRetry hook before retry', async () => {
+      const onRetry = vi.fn();
+      const mockFetch = createMockFetch([
+        { status: 500, body: { message: 'Error' }, headers: { 'content-type': 'application/json' } },
+        { status: 200, body: { success: true } },
+      ]);
+      const client = new HttpClient({
+        ...baseConfig,
+        fetch: mockFetch,
+        hooks: { onRetry },
+      });
+
+      await client.request({ method: 'GET', path: '/test' });
+
+      expect(onRetry).toHaveBeenCalledTimes(1);
+      expect(onRetry).toHaveBeenCalledWith(
+        expect.objectContaining({ method: 'GET', attempt: 0 }),
+        expect.any(Error),
+        expect.any(Number) // delay
+      );
+    });
+
+    it('should allow async hooks', async () => {
+      const callOrder: string[] = [];
+      const onRequest = vi.fn().mockImplementation(async () => {
+        await new Promise((r) => setTimeout(r, 10));
+        callOrder.push('onRequest');
+      });
+      const mockFetch = vi.fn().mockImplementation(() => {
+        callOrder.push('fetch');
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          json: () => Promise.resolve({}),
+        });
+      });
+      const client = new HttpClient({
+        ...baseConfig,
+        fetch: mockFetch,
+        hooks: { onRequest },
+      });
+
+      await client.request({ method: 'GET', path: '/test' });
+
+      expect(callOrder).toEqual(['onRequest', 'fetch']);
+    });
+  });
+
+  describe('abort signal', () => {
+    it('should abort request when signal is aborted', async () => {
+      const controller = new AbortController();
+      const mockFetch = vi.fn().mockImplementation(() => {
+        const error = new Error('Aborted');
+        error.name = 'AbortError';
+        return Promise.reject(error);
+      });
+      const client = new HttpClient({ ...baseConfig, maxRetries: 0, fetch: mockFetch });
+
+      // Abort before request
+      controller.abort();
+
+      await expect(
+        client.request({ method: 'GET', path: '/test', signal: controller.signal })
+      ).rejects.toThrow('aborted');
+    });
+
+    it('should distinguish user abort from timeout', async () => {
+      const controller = new AbortController();
+      const mockFetch = vi.fn().mockImplementation((_url, options) => {
+        // Simulate user abort
+        controller.abort();
+        const error = new Error('Aborted');
+        error.name = 'AbortError';
+        return Promise.reject(error);
+      });
+      const client = new HttpClient({ ...baseConfig, maxRetries: 0, fetch: mockFetch });
+
+      try {
+        await client.request({ method: 'GET', path: '/test', signal: controller.signal });
+        expect.fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(NetworkError);
+        expect((error as Error).message).toContain('aborted by user');
+      }
+    });
+  });
+
+  describe('retry configuration', () => {
+    it('should respect custom retryable statuses', async () => {
+      const mockFetch = createMockFetch([
+        { status: 502, body: { message: 'Bad gateway' }, headers: { 'content-type': 'application/json' } },
+        { status: 200, body: { success: true } },
+      ]);
+      const client = new HttpClient({
+        ...baseConfig,
+        fetch: mockFetch,
+        retry: {
+          maxRetries: 2,
+          retryableStatuses: [502],
+        },
+      });
+
+      const result = await client.request({ method: 'GET', path: '/test' });
+
+      expect(result).toEqual({ success: true });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not retry status codes not in retryableStatuses', async () => {
+      const mockFetch = createMockFetch([
+        { status: 500, body: { message: 'Server error' }, headers: { 'content-type': 'application/json' } },
+      ]);
+      const client = new HttpClient({
+        ...baseConfig,
+        fetch: mockFetch,
+        retry: {
+          maxRetries: 2,
+          retryableStatuses: [502, 503], // 500 not included
+        },
+      });
+
+      await expect(client.request({ method: 'GET', path: '/test' })).rejects.toThrow();
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should respect retryOnNetworkError=false', async () => {
+      const mockFetch = vi.fn().mockRejectedValue(new Error('Network failure'));
+      const client = new HttpClient({
+        ...baseConfig,
+        fetch: mockFetch,
+        retry: {
+          maxRetries: 2,
+          retryOnNetworkError: false,
+        },
+      });
+
+      await expect(client.request({ method: 'GET', path: '/test' })).rejects.toThrow();
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should use custom initial delay', async () => {
+      const startTime = Date.now();
+      const mockFetch = createMockFetch([
+        { status: 500, body: { message: 'Error' }, headers: { 'content-type': 'application/json' } },
+        { status: 200, body: { success: true } },
+      ]);
+      const client = new HttpClient({
+        ...baseConfig,
+        fetch: mockFetch,
+        retry: {
+          maxRetries: 1,
+          initialDelayMs: 100,
+          jitter: 0, // No jitter for predictable timing
+        },
+      });
+
+      await client.request({ method: 'GET', path: '/test' });
+
+      const elapsed = Date.now() - startTime;
+      expect(elapsed).toBeGreaterThanOrEqual(100);
+      expect(elapsed).toBeLessThan(500); // Should be around 100ms, not seconds
+    });
+  });
+
+  describe('rate limit info', () => {
+    it('should extract rate limit info from headers', async () => {
+      const mockFetch = createMockFetch([
+        {
+          status: 200,
+          body: { id: '123' },
+          headers: {
+            'content-type': 'application/json',
+            'x-ratelimit-limit': '100',
+            'x-ratelimit-remaining': '99',
+            'x-ratelimit-reset': '1704067200',
+          },
+        },
+      ]);
+      const client = new HttpClient({ ...baseConfig, fetch: mockFetch });
+
+      await client.request({ method: 'GET', path: '/test' });
+
+      expect(client.lastRateLimit).toEqual({
+        limit: 100,
+        remaining: 99,
+        reset: 1704067200,
+      });
+    });
+
+    it('should include rate limit info in RateLimitError', async () => {
+      const mockFetch = createMockFetch([
+        {
+          status: 429,
+          body: { message: 'Too many requests' },
+          headers: {
+            'content-type': 'application/json',
+            'retry-after': '60',
+            'x-ratelimit-limit': '100',
+            'x-ratelimit-remaining': '0',
+            'x-ratelimit-reset': '1704067200',
+          },
+        },
+      ]);
+      const client = new HttpClient({ ...baseConfig, maxRetries: 0, fetch: mockFetch });
+
+      try {
+        await client.request({ method: 'GET', path: '/test' });
+        expect.fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(RateLimitError);
+        const rateError = error as RateLimitError;
+        expect(rateError.limit).toBe(100);
+        expect(rateError.remaining).toBe(0);
+        expect(rateError.reset).toBe(1704067200);
+      }
+    });
+  });
+
+  describe('request ID', () => {
+    it('should extract request ID from headers', async () => {
+      const mockFetch = createMockFetch([
+        {
+          status: 200,
+          body: { id: '123' },
+          headers: { 'content-type': 'application/json', 'x-request-id': 'req_abc123' },
+        },
+      ]);
+      const client = new HttpClient({ ...baseConfig, fetch: mockFetch });
+
+      await client.request({ method: 'GET', path: '/test' });
+
+      expect(client.lastRequestId).toBe('req_abc123');
+    });
+
+    it('should include request ID in errors', async () => {
+      const mockFetch = createMockFetch([
+        {
+          status: 404,
+          body: { message: 'Not found' },
+          headers: { 'content-type': 'application/json', 'x-request-id': 'req_xyz789' },
+        },
+      ]);
+      const client = new HttpClient({ ...baseConfig, maxRetries: 0, fetch: mockFetch });
+
+      try {
+        await client.request({ method: 'GET', path: '/test' });
+        expect.fail('Should have thrown');
+      } catch (error) {
+        expect((error as NotFoundError).requestId).toBe('req_xyz789');
+      }
+    });
+  });
 });

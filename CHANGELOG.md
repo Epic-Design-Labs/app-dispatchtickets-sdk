@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-01-10
+
+### Added
+
+- **Request/Response Hooks** - Callbacks for observability, logging, and custom behavior
+  ```typescript
+  const client = new DispatchTickets({
+    apiKey: 'sk_live_...',
+    hooks: {
+      onRequest: (ctx) => console.log(`→ ${ctx.method} ${ctx.url}`),
+      onResponse: (ctx) => console.log(`← ${ctx.status} (${ctx.durationMs}ms)`),
+      onError: (error, ctx) => Sentry.captureException(error),
+      onRetry: (ctx, error, delayMs) => console.log(`Retrying in ${delayMs}ms`),
+    },
+  });
+  ```
+
+- **AbortController Support** - Cancel requests with an abort signal
+  ```typescript
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), 5000);
+
+  try {
+    await client.tickets.listPage('ws_abc', {}, { signal: controller.signal });
+  } catch (error) {
+    if (error.message.includes('aborted')) {
+      console.log('Request cancelled');
+    }
+  }
+  ```
+
+- **Fine-grained Retry Configuration** - Customize retry behavior per client
+  ```typescript
+  const client = new DispatchTickets({
+    apiKey: 'sk_live_...',
+    retry: {
+      maxRetries: 5,
+      retryableStatuses: [429, 500, 502, 503, 504],
+      retryOnNetworkError: true,
+      retryOnTimeout: true,
+      initialDelayMs: 500,
+      maxDelayMs: 60000,
+      backoffMultiplier: 2,
+      jitter: 0.25,
+    },
+  });
+  ```
+
+- **TypeDoc API Documentation** - Generate API docs with `npm run docs`
+  - All public methods now have comprehensive JSDoc comments
+  - Includes examples, parameter descriptions, and return types
+  - Run `npm run docs` to generate HTML documentation
+
+- **Enhanced JSDoc Comments** - Rich IDE tooltips and autocomplete
+  - All resources, methods, and types are fully documented
+  - Examples included in documentation
+
+### Changed
+
+- `maxRetries` option is now deprecated in favor of `retry.maxRetries` for fine-grained control
+
 ## [0.4.0] - 2026-01-10
 
 ### Added

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "name": "@dispatchtickets/sdk",
+  "readme": "README.md",
+  "includeVersion": true,
+  "categorizeByGroup": true,
+  "navigationLinks": {
+    "API Reference": "https://dispatch-tickets-api.onrender.com/docs",
+    "GitHub": "https://github.com/Epic-Design-Labs/app-dispatchtickets-sdk"
+  },
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeExternals": true,
+  "skipErrorChecking": true,
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": false
+  }
+}
