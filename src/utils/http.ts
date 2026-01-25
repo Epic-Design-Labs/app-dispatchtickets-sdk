@@ -364,7 +364,11 @@ export class HttpClient {
   }
 
   private buildUrl(path: string, query?: Record<string, string | number | boolean | undefined>): string {
-    const url = new URL(path, this.config.baseUrl);
+    // Ensure baseUrl ends with / and path doesn't start with /
+    // This prevents URL constructor from treating /path as absolute from origin
+    const base = this.config.baseUrl.endsWith('/') ? this.config.baseUrl : `${this.config.baseUrl}/`;
+    const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+    const url = new URL(normalizedPath, base);
 
     if (query) {
       for (const [key, value] of Object.entries(query)) {

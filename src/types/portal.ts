@@ -114,6 +114,8 @@ export interface PortalCreateTicketInput {
   title: string;
   /** Ticket body/description (optional) */
   body?: string;
+  /** IDs of pending attachments to associate with the ticket */
+  attachmentIds?: string[];
 }
 
 /**
@@ -149,4 +151,60 @@ export interface PortalTicketListResponse {
     /** Cursor for next page (null if no more) */
     nextCursor: string | null;
   };
+}
+
+// ============================================================================
+// Attachment Types
+// ============================================================================
+
+/**
+ * Input for initiating an attachment upload
+ */
+export interface PortalCreateAttachmentInput {
+  /** Original filename */
+  filename: string;
+  /** MIME type of the file */
+  contentType: string;
+  /** File size in bytes (max 50MB) */
+  size: number;
+}
+
+/**
+ * Response from initiating an attachment upload
+ */
+export interface PortalAttachmentUploadResponse {
+  /** The created attachment record */
+  attachment: PortalAttachment;
+  /** Presigned URL for uploading the file (PUT request) */
+  uploadUrl: string;
+  /** URL expiration timestamp */
+  expiresAt: string;
+}
+
+/**
+ * Attachment record
+ */
+export interface PortalAttachment {
+  /** Attachment ID */
+  id: string;
+  /** Original filename */
+  filename: string;
+  /** MIME type */
+  contentType: string;
+  /** File size in bytes */
+  size: number;
+  /** Upload status */
+  status: 'PENDING' | 'UPLOADED' | 'FAILED';
+  /** Creation timestamp */
+  createdAt: string;
+}
+
+/**
+ * Attachment with download URL
+ */
+export interface PortalAttachmentWithUrl extends PortalAttachment {
+  /** Presigned download URL */
+  downloadUrl: string;
+  /** Download URL expiration timestamp */
+  expiresAt: string;
 }

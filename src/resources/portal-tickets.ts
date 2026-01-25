@@ -6,6 +6,10 @@ import type {
   PortalCreateTicketInput,
   PortalListTicketsFilters,
   PortalTicketListResponse,
+  PortalCreateAttachmentInput,
+  PortalAttachmentUploadResponse,
+  PortalAttachment,
+  PortalAttachmentWithUrl,
 } from '../types/portal.js';
 
 /**
@@ -175,6 +179,174 @@ export class PortalTicketsResource extends BaseResource {
       idempotencyKey: options?.idempotencyKey,
       signal: options?.signal,
     });
+  }
+
+  // ==========================================================================
+  // Attachment Methods
+  // ==========================================================================
+
+  /**
+   * Initiate a pending attachment upload (before ticket creation)
+   *
+   * Use this to upload files before creating a ticket. After uploading to the
+   * presigned URL, confirm the upload, then pass the attachment IDs when
+   * creating the ticket.
+   *
+   * @param data - Attachment metadata
+   * @param options - Request options
+   * @returns Upload URL and attachment ID
+   *
+   * @example
+   * ```typescript
+   * // 1. Initiate upload
+   * const { attachment, uploadUrl } = await portal.tickets.initiatePendingUpload({
+   *   filename: 'screenshot.png',
+   *   contentType: 'image/png',
+   *   size: 12345,
+   * });
+   *
+   * // 2. Upload file to presigned URL
+   * await fetch(uploadUrl, {
+   *   method: 'PUT',
+   *   body: fileBuffer,
+   *   headers: { 'Content-Type': 'image/png' },
+   * });
+   *
+   * // 3. Confirm upload
+   * await portal.tickets.confirmPendingUpload(attachment.id);
+   *
+   * // 4. Create ticket with attachment
+   * const ticket = await portal.tickets.create({
+   *   title: 'Bug report',
+   *   body: 'See attached screenshot',
+   *   attachmentIds: [attachment.id],
+   * });
+   * ```
+   */
+  async initiatePendingUpload(
+    data: PortalCreateAttachmentInput,
+    options?: ApiRequestOptions
+  ): Promise<PortalAttachmentUploadResponse> {
+    return this._post<PortalAttachmentUploadResponse>(
+      '/portal/tickets/attachments/pending',
+      data,
+      options
+    );
+  }
+
+  /**
+   * Confirm a pending attachment upload
+   *
+   * Call this after successfully uploading the file to the presigned URL.
+   *
+   * @param attachmentId - Attachment ID from initiatePendingUpload
+   * @param options - Request options
+   * @returns Confirmed attachment
+   */
+  async confirmPendingUpload(
+    attachmentId: string,
+    options?: ApiRequestOptions
+  ): Promise<PortalAttachment> {
+    return this._post<PortalAttachment>(
+      `/portal/tickets/attachments/pending/${attachmentId}/confirm`,
+      {},
+      options
+    );
+  }
+
+  /**
+   * Initiate attachment upload for an existing ticket
+   *
+   * @param ticketId - Ticket ID
+   * @param data - Attachment metadata
+   * @param options - Request options
+   * @returns Upload URL and attachment ID
+   *
+   * @example
+   * ```typescript
+   * const { attachment, uploadUrl } = await portal.tickets.initiateUpload('tkt_abc123', {
+   *   filename: 'document.pdf',
+   *   contentType: 'application/pdf',
+   *   size: 54321,
+   * });
+   *
+   * await fetch(uploadUrl, {
+   *   method: 'PUT',
+   *   body: fileBuffer,
+   *   headers: { 'Content-Type': 'application/pdf' },
+   * });
+   *
+   * await portal.tickets.confirmUpload('tkt_abc123', attachment.id);
+   * ```
+   */
+  async initiateUpload(
+    ticketId: string,
+    data: PortalCreateAttachmentInput,
+    options?: ApiRequestOptions
+  ): Promise<PortalAttachmentUploadResponse> {
+    return this._post<PortalAttachmentUploadResponse>(
+      `/portal/tickets/${ticketId}/attachments`,
+      data,
+      options
+    );
+  }
+
+  /**
+   * Confirm attachment upload for a ticket
+   *
+   * @param ticketId - Ticket ID
+   * @param attachmentId - Attachment ID from initiateUpload
+   * @param options - Request options
+   * @returns Confirmed attachment
+   */
+  async confirmUpload(
+    ticketId: string,
+    attachmentId: string,
+    options?: ApiRequestOptions
+  ): Promise<PortalAttachment> {
+    return this._post<PortalAttachment>(
+      `/portal/tickets/${ticketId}/attachments/${attachmentId}/confirm`,
+      {},
+      options
+    );
+  }
+
+  /**
+   * List attachments on a ticket
+   *
+   * @param ticketId - Ticket ID
+   * @param options - Request options
+   * @returns Array of attachments
+   */
+  async listAttachments(
+    ticketId: string,
+    options?: ApiRequestOptions
+  ): Promise<PortalAttachment[]> {
+    return this._get<PortalAttachment[]>(
+      `/portal/tickets/${ticketId}/attachments`,
+      undefined,
+      options
+    );
+  }
+
+  /**
+   * Get attachment with download URL
+   *
+   * @param ticketId - Ticket ID
+   * @param attachmentId - Attachment ID
+   * @param options - Request options
+   * @returns Attachment with presigned download URL
+   */
+  async getAttachment(
+    ticketId: string,
+    attachmentId: string,
+    options?: ApiRequestOptions
+  ): Promise<PortalAttachmentWithUrl> {
+    return this._get<PortalAttachmentWithUrl>(
+      `/portal/tickets/${ticketId}/attachments/${attachmentId}`,
+      undefined,
+      options
+    );
   }
 
   /**
