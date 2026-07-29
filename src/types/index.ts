@@ -10,6 +10,7 @@ export * from './attachment.js';
 export * from './webhook.js';
 export * from './customer.js';
 export * from './category.js';
+export * from './status.js';
 export * from './tag.js';
 export * from './field.js';
 

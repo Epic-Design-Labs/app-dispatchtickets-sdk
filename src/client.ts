@@ -12,6 +12,7 @@ import { CommentsResource } from './resources/comments.js';
 import { AttachmentsResource } from './resources/attachments.js';
 import { WebhooksResource } from './resources/webhooks.js';
 import { CategoriesResource } from './resources/categories.js';
+import { StatusesResource } from './resources/statuses.js';
 import { TagsResource } from './resources/tags.js';
 import { CustomersResource } from './resources/customers.js';
 import { FieldsResource } from './resources/fields.js';
@@ -335,6 +336,25 @@ export class DispatchTickets {
   readonly categories: CategoriesResource;
 
   /**
+   * Ticket statuses resource
+   *
+   * Each brand has four system statuses (open, pending, resolved, closed) plus
+   * any custom statuses. Use this to discover valid status keys and to get
+   * ticket counts per status.
+   *
+   * @example
+   * ```typescript
+   * // List statuses (discovery)
+   * const statuses = await client.statuses.list('ws_abc123');
+   *
+   * // Ticket counts per status
+   * const stats = await client.statuses.getStats('ws_abc123');
+   * // e.g. [{ key: 'open', name: 'Open', ticketCount: 12, ... }, ...]
+   * ```
+   */
+  readonly statuses: StatusesResource;
+
+  /**
    * Tags resource
    *
    * @example
@@ -444,6 +464,7 @@ export class DispatchTickets {
     this.attachments = new AttachmentsResource(this.http);
     this.webhooks = new WebhooksResource(this.http);
     this.categories = new CategoriesResource(this.http);
+    this.statuses = new StatusesResource(this.http);
     this.tags = new TagsResource(this.http);
     this.customers = new CustomersResource(this.http);
     this.fields = new FieldsResource(this.http);

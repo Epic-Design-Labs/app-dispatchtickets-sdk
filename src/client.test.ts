@@ -27,6 +27,7 @@ describe('DispatchTickets', () => {
       expect(client.attachments).toBeDefined();
       expect(client.webhooks).toBeDefined();
       expect(client.categories).toBeDefined();
+      expect(client.statuses).toBeDefined();
       expect(client.tags).toBeDefined();
       expect(client.customers).toBeDefined();
       expect(client.fields).toBeDefined();
@@ -101,6 +102,54 @@ describe('DispatchTickets', () => {
             'Authorization': 'Bearer sk_test_123',
           }),
         })
+      );
+    });
+  });
+
+  describe('statuses resource', () => {
+    it('should list statuses for a brand', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: { get: () => 'application/json' },
+        json: () =>
+          Promise.resolve([
+            { id: 'sts_1', key: 'open', name: 'Open', isSystem: true },
+          ]),
+      });
+      const client = new DispatchTickets({ apiKey: 'sk_test_123', fetch: mockFetch });
+
+      const statuses = await client.statuses.list('ws_abc');
+
+      expect(statuses).toEqual([
+        { id: 'sts_1', key: 'open', name: 'Open', isSystem: true },
+      ]);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/brands/ws_abc/statuses'),
+        expect.objectContaining({ method: 'GET' })
+      );
+    });
+
+    it('should get ticket counts per status', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: { get: () => 'application/json' },
+        json: () =>
+          Promise.resolve([
+            { id: 'sts_1', key: 'open', name: 'Open', ticketCount: 12 },
+          ]),
+      });
+      const client = new DispatchTickets({ apiKey: 'sk_test_123', fetch: mockFetch });
+
+      const stats = await client.statuses.getStats('ws_abc');
+
+      expect(stats).toEqual([
+        { id: 'sts_1', key: 'open', name: 'Open', ticketCount: 12 },
+      ]);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/brands/ws_abc/statuses/stats'),
+        expect.objectContaining({ method: 'GET' })
       );
     });
   });
