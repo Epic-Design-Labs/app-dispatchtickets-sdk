@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Presence on `client.brands`: `getPresence()`, `setPresence()`, `listPresence()`
 - Webhook events `chat.started` and `chat.message`, with `isChatStartedEvent` and
   `isChatMessageEvent`. `parseWebhookEvent` used to reject them as unknown.
+- Webhook events `ticket.overdue` and `ticket.awaiting_reply`, with `isTicketOverdueEvent` and
+  `isTicketAwaitingReplyEvent` (also rejected as unknown before)
 - `'chat'` in `TicketSource`
 
 ## [0.5.0] - 2026-01-10

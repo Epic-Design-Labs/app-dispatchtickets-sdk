@@ -472,6 +472,7 @@ import {
   isTicketCreatedEvent,
   isTicketUpdatedEvent,
   isCommentCreatedEvent,
+  isTicketAwaitingReplyEvent,
   isChatStartedEvent,
   isChatMessageEvent,
 } from '@dispatchtickets/sdk';
@@ -497,6 +498,11 @@ if (isCommentCreatedEvent(event)) {
   // event.data is typed as CommentCreatedData
   console.log('New comment on', event.data.ticketNumber);
   console.log('Author:', event.data.comment.authorType);
+}
+
+if (isTicketAwaitingReplyEvent(event)) {
+  // once at 'warning', once at 'critical'
+  console.log(event.data.publicId, 'waiting', event.data.waitingSeconds, 's');
 }
 
 if (isChatStartedEvent(event)) {

@@ -7,6 +7,8 @@ export type WebhookEventType =
   | 'ticket.created'
   | 'ticket.updated'
   | 'ticket.comment.created'
+  | 'ticket.overdue'
+  | 'ticket.awaiting_reply'
   | 'chat.started'
   | 'chat.message';
 
@@ -85,6 +87,35 @@ export interface CommentCreatedData extends EventCustomerInfo {
 }
 
 /**
+ * Payload for ticket.overdue event: a ticket passed its due date
+ */
+export interface TicketOverdueData {
+  id: string;
+  ticketNumber: number;
+  title: string;
+  dueAt: string;
+  /** Milliseconds past `dueAt` when the event fired */
+  overdueBy: number;
+}
+
+/**
+ * Payload for ticket.awaiting_reply event: a customer has been waiting for a
+ * reply. Fires once at `'warning'` and once at `'critical'` for each wait.
+ */
+export interface TicketAwaitingReplyData {
+  id: string;
+  ticketNumber: number;
+  /** Formatted ticket number (e.g., "ACME-123") */
+  publicId: string;
+  title: string;
+  source: TicketSource;
+  assigneeId: string | null;
+  level: 'warning' | 'critical';
+  awaitingReplySince: string;
+  waitingSeconds: number;
+}
+
+/**
  * Payload for chat.started event: a visitor's first message opened a chat
  */
 export interface ChatStartedData {
@@ -148,6 +179,16 @@ export type TicketUpdatedEvent = WebhookEventEnvelope<'ticket.updated', TicketUp
 export type CommentCreatedEvent = WebhookEventEnvelope<'ticket.comment.created', CommentCreatedData>;
 
 /**
+ * Ticket overdue webhook event
+ */
+export type TicketOverdueEvent = WebhookEventEnvelope<'ticket.overdue', TicketOverdueData>;
+
+/**
+ * Ticket awaiting reply webhook event
+ */
+export type TicketAwaitingReplyEvent = WebhookEventEnvelope<'ticket.awaiting_reply', TicketAwaitingReplyData>;
+
+/**
  * Chat started webhook event
  */
 export type ChatStartedEvent = WebhookEventEnvelope<'chat.started', ChatStartedData>;
@@ -164,6 +205,8 @@ export type WebhookEvent =
   | TicketCreatedEvent
   | TicketUpdatedEvent
   | CommentCreatedEvent
+  | TicketOverdueEvent
+  | TicketAwaitingReplyEvent
   | ChatStartedEvent
   | ChatMessageEvent;
 
@@ -174,6 +217,8 @@ export interface WebhookEventMap {
   'ticket.created': TicketCreatedEvent;
   'ticket.updated': TicketUpdatedEvent;
   'ticket.comment.created': CommentCreatedEvent;
+  'ticket.overdue': TicketOverdueEvent;
+  'ticket.awaiting_reply': TicketAwaitingReplyEvent;
   'chat.started': ChatStartedEvent;
   'chat.message': ChatMessageEvent;
 }
@@ -197,6 +242,20 @@ export function isTicketUpdatedEvent(event: WebhookEvent): event is TicketUpdate
  */
 export function isCommentCreatedEvent(event: WebhookEvent): event is CommentCreatedEvent {
   return event.event === 'ticket.comment.created';
+}
+
+/**
+ * Type guard to check if event is a ticket.overdue event
+ */
+export function isTicketOverdueEvent(event: WebhookEvent): event is TicketOverdueEvent {
+  return event.event === 'ticket.overdue';
+}
+
+/**
+ * Type guard to check if event is a ticket.awaiting_reply event
+ */
+export function isTicketAwaitingReplyEvent(event: WebhookEvent): event is TicketAwaitingReplyEvent {
+  return event.event === 'ticket.awaiting_reply';
 }
 
 /**
@@ -256,6 +315,8 @@ export function parseWebhookEvent(payload: string | object): WebhookEvent {
     'ticket.created',
     'ticket.updated',
     'ticket.comment.created',
+    'ticket.overdue',
+    'ticket.awaiting_reply',
     'chat.started',
     'chat.message',
   ];

@@ -6,6 +6,8 @@ import {
   isCommentCreatedEvent,
   isChatStartedEvent,
   isChatMessageEvent,
+  isTicketOverdueEvent,
+  isTicketAwaitingReplyEvent,
   type WebhookEvent,
   type TicketCreatedEvent,
   type TicketUpdatedEvent,
@@ -265,5 +267,17 @@ describe('chat events', () => {
     expect(isChatMessageEvent(a)).toBe(false);
     expect(isChatMessageEvent(b)).toBe(true);
     if (isChatMessageEvent(b)) expect(b.data.from).toBe('agent');
+  });
+});
+
+describe('SLA events', () => {
+  it('parses ticket.overdue and ticket.awaiting_reply', () => {
+    const base = { brand_id: 'ws_1', timestamp: '2026-10-21T00:00:00Z' };
+    const overdue = parseWebhookEvent({ ...base, id: 'evt_3', event: 'ticket.overdue', data: { id: 'tkt_1', overdueBy: 1000 } });
+    const waiting = parseWebhookEvent({ ...base, id: 'evt_4', event: 'ticket.awaiting_reply', data: { id: 'tkt_1', level: 'critical' } });
+    expect(isTicketOverdueEvent(overdue)).toBe(true);
+    expect(isTicketAwaitingReplyEvent(overdue)).toBe(false);
+    expect(isTicketAwaitingReplyEvent(waiting)).toBe(true);
+    if (isTicketAwaitingReplyEvent(waiting)) expect(waiting.data.level).toBe('critical');
   });
 });
