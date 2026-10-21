@@ -6,7 +6,9 @@ import type { TicketStatus, TicketPriority, TicketSource, AuthorType } from './c
 export type WebhookEventType =
   | 'ticket.created'
   | 'ticket.updated'
-  | 'ticket.comment.created';
+  | 'ticket.comment.created'
+  | 'chat.started'
+  | 'chat.message';
 
 /**
  * Base webhook event envelope
@@ -83,6 +85,54 @@ export interface CommentCreatedData extends EventCustomerInfo {
 }
 
 /**
+ * Payload for chat.started event: a visitor's first message opened a chat
+ */
+export interface ChatStartedData {
+  ticketId: string;
+  ticketNumber: number;
+  sessionId: string;
+  title: string;
+  /** The visitor's first message */
+  body: string | null;
+  createdAt: string;
+  /**
+   * `'verified'`: your server vouched for this person with an identity token.
+   * `'anonymous'`: anyone; `claimedEmail` is whatever they typed.
+   */
+  identity: 'verified' | 'anonymous';
+  /** Your user id, when verified */
+  externalUserId: string | null;
+  /** An email an anonymous visitor typed. Never verified. */
+  claimedEmail: string | null;
+  /** What the widget reported about the page and browser */
+  visitor: Record<string, unknown> | null;
+  /** Set only for verified visitors */
+  customerId: string | null;
+  customerEmail: string | null;
+  customerName: string | null;
+  companyId: string | null;
+  companyName: string | null;
+}
+
+/**
+ * Payload for chat.message event: a visitor or agent message on a chat.
+ * Internal notes never fire it, and the first message arrives as chat.started.
+ */
+export interface ChatMessageData {
+  ticketId: string;
+  /** Formatted ticket number (e.g., "ACME-123") */
+  ticketNumber: string;
+  sessionId: string | null;
+  from: 'visitor' | 'agent';
+  message: {
+    id: string;
+    body: string;
+    authorId: string | null;
+    createdAt: string;
+  };
+}
+
+/**
  * Ticket created webhook event
  */
 export type TicketCreatedEvent = WebhookEventEnvelope<'ticket.created', TicketCreatedData>;
@@ -98,9 +148,24 @@ export type TicketUpdatedEvent = WebhookEventEnvelope<'ticket.updated', TicketUp
 export type CommentCreatedEvent = WebhookEventEnvelope<'ticket.comment.created', CommentCreatedData>;
 
 /**
+ * Chat started webhook event
+ */
+export type ChatStartedEvent = WebhookEventEnvelope<'chat.started', ChatStartedData>;
+
+/**
+ * Chat message webhook event
+ */
+export type ChatMessageEvent = WebhookEventEnvelope<'chat.message', ChatMessageData>;
+
+/**
  * Union of all webhook events
  */
-export type WebhookEvent = TicketCreatedEvent | TicketUpdatedEvent | CommentCreatedEvent;
+export type WebhookEvent =
+  | TicketCreatedEvent
+  | TicketUpdatedEvent
+  | CommentCreatedEvent
+  | ChatStartedEvent
+  | ChatMessageEvent;
 
 /**
  * Map of event types to their data types
@@ -109,6 +174,8 @@ export interface WebhookEventMap {
   'ticket.created': TicketCreatedEvent;
   'ticket.updated': TicketUpdatedEvent;
   'ticket.comment.created': CommentCreatedEvent;
+  'chat.started': ChatStartedEvent;
+  'chat.message': ChatMessageEvent;
 }
 
 /**
@@ -130,6 +197,20 @@ export function isTicketUpdatedEvent(event: WebhookEvent): event is TicketUpdate
  */
 export function isCommentCreatedEvent(event: WebhookEvent): event is CommentCreatedEvent {
   return event.event === 'ticket.comment.created';
+}
+
+/**
+ * Type guard to check if event is a chat.started event
+ */
+export function isChatStartedEvent(event: WebhookEvent): event is ChatStartedEvent {
+  return event.event === 'chat.started';
+}
+
+/**
+ * Type guard to check if event is a chat.message event
+ */
+export function isChatMessageEvent(event: WebhookEvent): event is ChatMessageEvent {
+  return event.event === 'chat.message';
 }
 
 /**
@@ -171,7 +252,13 @@ export function parseWebhookEvent(payload: string | object): WebhookEvent {
     throw new Error('Invalid webhook payload: missing data');
   }
 
-  const validEvents: WebhookEventType[] = ['ticket.created', 'ticket.updated', 'ticket.comment.created'];
+  const validEvents: WebhookEventType[] = [
+    'ticket.created',
+    'ticket.updated',
+    'ticket.comment.created',
+    'chat.started',
+    'chat.message',
+  ];
   if (!validEvents.includes(event.event)) {
     throw new Error(`Invalid webhook payload: unknown event type "${event.event}"`);
   }

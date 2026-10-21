@@ -5,6 +5,7 @@ import type {
   GeneratePortalTokenInput,
   SendMagicLinkInput,
 } from '../types/portal.js';
+import type { PresenceEntry, SetPresenceInput, MemberPresence } from '../types/presence.js';
 
 /**
  * Brands resource for managing workspaces
@@ -155,5 +156,45 @@ export class BrandsResource extends BaseResource {
     data: SendMagicLinkInput
   ): Promise<{ success: boolean }> {
     return this._post<{ success: boolean }>(`/brands/${brandId}/portal/magic-link`, data);
+  }
+
+  // ===========================================================================
+  // Presence
+  // ===========================================================================
+
+  /**
+   * Who is around on a brand, best status first. Use `status`, not
+   * `intendedStatus`, to decide who gets a chat.
+   */
+  async getPresence(brandId: string): Promise<PresenceEntry[]> {
+    const res = await this._get<{ data: PresenceEntry[] }>(`/brands/${brandId}/presence`);
+    return res.data;
+  }
+
+  /**
+   * Set a member's presence on a brand, for teams that don't work in the
+   * Dispatch Tickets app (a Slack bridge, say). The status lapses to
+   * `'offline'` after `ttlSeconds` unless you set it again.
+   *
+   * @example
+   * ```typescript
+   * await client.brands.setPresence('ws_abc123', {
+   *   memberId: 'usr_abc123',
+   *   status: 'available',
+   *   ttlSeconds: 600,
+   * });
+   * ```
+   */
+  async setPresence(brandId: string, data: SetPresenceInput): Promise<PresenceEntry> {
+    return this._put<PresenceEntry>(`/brands/${brandId}/presence`, data);
+  }
+
+  /**
+   * Presence across every brand this API key can see. Lists only members
+   * with a status on one of those brands.
+   */
+  async listPresence(): Promise<MemberPresence[]> {
+    const res = await this._get<{ data: MemberPresence[] }>('/presence');
+    return res.data;
   }
 }

@@ -4,6 +4,8 @@ import {
   isTicketCreatedEvent,
   isTicketUpdatedEvent,
   isCommentCreatedEvent,
+  isChatStartedEvent,
+  isChatMessageEvent,
   type WebhookEvent,
   type TicketCreatedEvent,
   type TicketUpdatedEvent,
@@ -237,5 +239,31 @@ describe('type guards', () => {
         expect(event.data.ticketNumber).toBe('ACME-1');
       }
     });
+  });
+});
+
+describe('chat events', () => {
+  const started = {
+    id: 'evt_1',
+    event: 'chat.started',
+    brand_id: 'ws_1',
+    timestamp: '2026-10-21T00:00:00Z',
+    data: { ticketId: 'tkt_1', ticketNumber: 7, sessionId: 'chs_1', identity: 'anonymous' },
+  };
+  const message = {
+    id: 'evt_2',
+    event: 'chat.message',
+    brand_id: 'ws_1',
+    timestamp: '2026-10-21T00:00:01Z',
+    data: { ticketId: 'tkt_1', ticketNumber: 'ACM-7', sessionId: 'chs_1', from: 'agent', message: { id: 'cmt_1', body: 'hi' } },
+  };
+
+  it('parses chat.started and chat.message', () => {
+    const a = parseWebhookEvent(started);
+    const b = parseWebhookEvent(JSON.stringify(message));
+    expect(isChatStartedEvent(a)).toBe(true);
+    expect(isChatMessageEvent(a)).toBe(false);
+    expect(isChatMessageEvent(b)).toBe(true);
+    if (isChatMessageEvent(b)) expect(b.data.from).toBe('agent');
   });
 });

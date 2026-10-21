@@ -173,6 +173,20 @@ await client.brands.update('ws_abc123', { name: 'New Name' });
 
 // Delete a brand
 await client.brands.delete('ws_abc123');
+
+// Who is around to take a chat (best status first)
+const presence = await client.brands.getPresence('ws_abc123');
+
+// Set a member's status, e.g. from a Slack bridge. It lapses to 'offline'
+// after ttlSeconds (default 300) unless you set it again.
+await client.brands.setPresence('ws_abc123', {
+  memberId: 'usr_abc123',
+  status: 'available',
+  ttlSeconds: 600,
+});
+
+// Presence across every brand this key can see
+const members = await client.brands.listPresence();
 ```
 
 ### Tickets
@@ -368,6 +382,53 @@ await client.fields.update('ws_abc123', 'ticket', 'order_id', {
 await client.fields.delete('ws_abc123', 'ticket', 'order_id');
 ```
 
+### Chat
+
+A chat is a ticket with source `'chat'`, and its messages are comments, so you
+list chats with `client.tickets` and reply with `client.comments`.
+
+```typescript
+// On your server: vouch for a signed-in user, then pass the token to the widget.
+// Their chats are filed under their contact. The token expires after an hour.
+const { token } = await client.chat.createIdentityToken('ws_abc123', {
+  userId: user.id,
+  email: user.email,
+  name: user.name,
+});
+
+// The visitor behind a chat ticket: still on the page? verified or anonymous?
+const visitor = await client.chat.getVisitor('ws_abc123', 'tkt_xyz');
+if (visitor.verified) console.log('Signed in as', visitor.verified.email);
+else console.log('Anonymous; says they are', visitor.claimedEmail); // never verified
+```
+
+### Enrichment
+
+Your context endpoint: called when a ticket is created, and what it returns is
+shown beside the ticket. Requests are signed like webhooks.
+
+```typescript
+// Set it up (a signing secret is generated unless you pass one)
+await client.enrichment.upsert('ws_abc123', {
+  url: 'https://your-app.com/dispatch/context',
+  events: ['ticket.created'],
+});
+const { secret } = await client.enrichment.revealSecret('ws_abc123');
+
+// Try it without touching any ticket
+const result = await client.enrichment.test('ws_abc123');
+if (!result.ok) console.error(result.error, result.rawBody);
+result.warnings.forEach((w) => console.warn(w)); // what was dropped
+
+// Fetch again for one ticket
+await client.enrichment.refresh('ws_abc123', 'tkt_xyz');
+
+// Read, rotate the secret, remove
+const config = await client.enrichment.get('ws_abc123'); // null if none
+await client.enrichment.rotateSecret('ws_abc123');
+await client.enrichment.delete('ws_abc123');
+```
+
 ## Error Handling
 
 Use type guards for clean error handling:
@@ -411,6 +472,8 @@ import {
   isTicketCreatedEvent,
   isTicketUpdatedEvent,
   isCommentCreatedEvent,
+  isChatStartedEvent,
+  isChatMessageEvent,
 } from '@dispatchtickets/sdk';
 
 // Parse and validate webhook payload
@@ -434,6 +497,15 @@ if (isCommentCreatedEvent(event)) {
   // event.data is typed as CommentCreatedData
   console.log('New comment on', event.data.ticketNumber);
   console.log('Author:', event.data.comment.authorType);
+}
+
+if (isChatStartedEvent(event)) {
+  // 'verified' only when your server issued an identity token
+  console.log('Chat started:', event.data.identity, event.data.body);
+}
+
+if (isChatMessageEvent(event)) {
+  console.log(`${event.data.from}:`, event.data.message.body);
 }
 ```
 

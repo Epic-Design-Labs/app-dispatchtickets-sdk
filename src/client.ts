@@ -16,6 +16,8 @@ import { StatusesResource } from './resources/statuses.js';
 import { TagsResource } from './resources/tags.js';
 import { CustomersResource } from './resources/customers.js';
 import { FieldsResource } from './resources/fields.js';
+import { ChatResource } from './resources/chat.js';
+import { EnrichmentResource } from './resources/enrichment.js';
 import { webhookUtils } from './utils/webhooks.js';
 
 /**
@@ -405,6 +407,42 @@ export class DispatchTickets {
   readonly fields: FieldsResource;
 
   /**
+   * Chat resource
+   *
+   * Chats are tickets with source `'chat'`; this covers the visitor behind
+   * one and identity tokens for signed-in users.
+   *
+   * @example
+   * ```typescript
+   * // On your server: verify a signed-in user for the widget
+   * const { token } = await client.chat.createIdentityToken('ws_abc123', {
+   *   userId: user.id,
+   *   email: user.email,
+   * });
+   *
+   * // Is the visitor still on the page?
+   * const visitor = await client.chat.getVisitor('ws_abc123', 'tkt_xyz');
+   * ```
+   */
+  readonly chat: ChatResource;
+
+  /**
+   * Enrichment resource
+   *
+   * Your context endpoint, called when a ticket is created; what it returns
+   * is shown beside the ticket.
+   *
+   * @example
+   * ```typescript
+   * await client.enrichment.upsert('ws_abc123', {
+   *   url: 'https://your-app.com/dispatch/context',
+   * });
+   * const result = await client.enrichment.test('ws_abc123');
+   * ```
+   */
+  readonly enrichment: EnrichmentResource;
+
+  /**
    * Static webhook utilities
    *
    * @example
@@ -468,5 +506,7 @@ export class DispatchTickets {
     this.tags = new TagsResource(this.http);
     this.customers = new CustomersResource(this.http);
     this.fields = new FieldsResource(this.http);
+    this.chat = new ChatResource(this.http);
+    this.enrichment = new EnrichmentResource(this.http);
   }
 }

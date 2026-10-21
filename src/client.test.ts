@@ -31,6 +31,8 @@ describe('DispatchTickets', () => {
       expect(client.tags).toBeDefined();
       expect(client.customers).toBeDefined();
       expect(client.fields).toBeDefined();
+      expect(client.chat).toBeDefined();
+      expect(client.enrichment).toBeDefined();
     });
 
     it('should use default config values', () => {
@@ -151,6 +153,88 @@ describe('DispatchTickets', () => {
         expect.stringContaining('/brands/ws_abc/statuses/stats'),
         expect.objectContaining({ method: 'GET' })
       );
+    });
+  });
+  describe('chat, enrichment and presence', () => {
+    function respond(body: unknown, contentType = 'application/json') {
+      return vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: { get: (h: string) => (h.toLowerCase() === 'content-type' ? contentType : null) },
+        json: () => Promise.resolve(body),
+      });
+    }
+    const call = (mockFetch: ReturnType<typeof vi.fn>) => {
+      const [url, init] = mockFetch.mock.calls[0];
+      return { url: String(url), method: init.method, body: init.body ? JSON.parse(init.body) : undefined };
+    };
+
+    it('gets the visitor behind a chat ticket', async () => {
+      const mockFetch = respond({ present: true, verified: null, blocked: false });
+      const client = new DispatchTickets({ apiKey: 'sk_test_123', fetch: mockFetch });
+
+      const visitor = await client.chat.getVisitor('ws_abc', 'tkt_1');
+
+      expect(visitor.present).toBe(true);
+      expect(call(mockFetch)).toMatchObject({ method: 'GET' });
+      expect(call(mockFetch).url).toMatch(/\/brands\/ws_abc\/tickets\/tkt_1\/chat$/);
+    });
+
+    it('mints an identity token', async () => {
+      const mockFetch = respond({ token: 'tok', expiresAt: '2026-10-21T00:00:00Z' });
+      const client = new DispatchTickets({ apiKey: 'sk_test_123', fetch: mockFetch });
+
+      const res = await client.chat.createIdentityToken('ws_abc', { userId: 'u1', email: 'a@b.co' });
+
+      expect(res.token).toBe('tok');
+      expect(call(mockFetch)).toMatchObject({ method: 'POST', body: { userId: 'u1', email: 'a@b.co' } });
+      expect(call(mockFetch).url).toMatch(/\/brands\/ws_abc\/chat\/identity-token$/);
+    });
+
+    it('returns null when no enrichment endpoint is set up (empty body)', async () => {
+      const mockFetch = respond(undefined, '');
+      const client = new DispatchTickets({ apiKey: 'sk_test_123', fetch: mockFetch });
+
+      expect(await client.enrichment.get('ws_abc')).toBeNull();
+    });
+
+    it('upserts, tests and refreshes enrichment', async () => {
+      const mockFetch = respond({ ok: true, durationMs: 5, warnings: [] });
+      const client = new DispatchTickets({ apiKey: 'sk_test_123', fetch: mockFetch });
+
+      await client.enrichment.upsert('ws_abc', { url: 'https://x.co/ctx', events: ['ticket.created'] });
+      await client.enrichment.test('ws_abc');
+      await client.enrichment.refresh('ws_abc', 'tkt_1');
+
+      const calls = mockFetch.mock.calls.map(([url, init]) => [init.method, String(url).replace(/^.*\/v1/, '')]);
+      expect(calls).toEqual([
+        ['PUT', '/brands/ws_abc/enrichment'],
+        ['POST', '/brands/ws_abc/enrichment/test'],
+        ['POST', '/brands/ws_abc/tickets/tkt_1/enrichment/refresh'],
+      ]);
+      expect(JSON.parse(mockFetch.mock.calls[1][1].body)).toEqual({});
+    });
+
+    it('unwraps brand presence and sets it', async () => {
+      const mockFetch = respond({ data: [{ memberId: 'usr_1', status: 'available' }] });
+      const client = new DispatchTickets({ apiKey: 'sk_test_123', fetch: mockFetch });
+
+      const entries = await client.brands.getPresence('ws_abc');
+      expect(entries).toEqual([{ memberId: 'usr_1', status: 'available' }]);
+
+      await client.brands.setPresence('ws_abc', { memberId: 'usr_1', status: 'away', ttlSeconds: 600 });
+      const [url, init] = mockFetch.mock.calls[1];
+      expect(init.method).toBe('PUT');
+      expect(String(url)).toMatch(/\/brands\/ws_abc\/presence$/);
+      expect(JSON.parse(init.body)).toEqual({ memberId: 'usr_1', status: 'away', ttlSeconds: 600 });
+    });
+
+    it('lists account-wide presence', async () => {
+      const mockFetch = respond({ data: [{ memberId: 'usr_1', status: 'busy', brands: [] }] });
+      const client = new DispatchTickets({ apiKey: 'sk_test_123', fetch: mockFetch });
+
+      expect(await client.brands.listPresence()).toHaveLength(1);
+      expect(String(mockFetch.mock.calls[0][0])).toMatch(/\/v1\/presence$/);
     });
   });
 });

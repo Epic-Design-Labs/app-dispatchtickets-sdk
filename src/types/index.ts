@@ -13,6 +13,9 @@ export * from './category.js';
 export * from './status.js';
 export * from './tag.js';
 export * from './field.js';
+export * from './chat.js';
+export * from './enrichment.js';
+export * from './presence.js';
 
 // Webhook event types
 export * from './events.js';
