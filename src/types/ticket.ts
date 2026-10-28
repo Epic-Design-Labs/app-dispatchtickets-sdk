@@ -92,6 +92,8 @@ export interface ListTicketsFilters {
   categoryId?: string;
   tagIds?: string[];
   source?: TicketSource;
+  /** The source's own id. For a chat ticket, the chat session id. */
+  sourceId?: string;
   sort?: 'createdAt' | 'updatedAt' | 'priority';
   order?: SortOrder;
   limit?: number;

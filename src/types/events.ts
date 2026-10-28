@@ -47,6 +47,10 @@ export interface TicketCreatedData extends EventCustomerInfo {
   status: TicketStatus;
   priority: TicketPriority;
   source: TicketSource;
+  /** The channel's own id (chat session id, email message-id), or null */
+  sourceId: string | null;
+  /** Current custom field values; {} when none */
+  customFields: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -60,6 +64,10 @@ export interface TicketUpdatedData extends EventCustomerInfo {
   status: TicketStatus;
   priority: TicketPriority;
   assigneeId: string | null;
+  source: TicketSource;
+  sourceId: string | null;
+  /** Custom field values after this update */
+  customFields: Record<string, unknown>;
   updatedAt: string;
   /** List of field names that were changed */
   changes: string[];

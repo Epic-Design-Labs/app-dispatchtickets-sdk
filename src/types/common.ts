@@ -26,6 +26,7 @@ export type TicketSource =
   | 'web'
   | 'email'
   | 'chat'
+  | 'live'
   | 'slack'
   | 'sms'
   | 'discord'

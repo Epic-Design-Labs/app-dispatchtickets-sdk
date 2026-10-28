@@ -149,6 +149,7 @@ export class TicketsResource extends BaseResource {
     if (filters.categoryId) query.categoryId = filters.categoryId;
     if (filters.tagIds) query.tagIds = filters.tagIds.join(',');
     if (filters.source) query.source = filters.source;
+    if (filters.sourceId) query.sourceId = filters.sourceId;
     if (filters.sort) query.sort = filters.sort;
     if (filters.order) query.order = filters.order;
     if (filters.limit) query.limit = filters.limit;
