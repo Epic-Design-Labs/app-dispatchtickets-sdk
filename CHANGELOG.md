@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-10-28
+
+### Added
+
+- `client.chat.convert()`: turn a chat into an email ticket (same ticket), and
+  `client.chat.resendEmailConfirmation()`
+- `emailConfirmation` on `ChatVisitor`
+- `chatConvertedAt` on `Ticket` and on `ticket.updated` event data, and the `chatConverted`
+  filter on `tickets.list()` (`false` = live chats only)
+- `client.webhooks.revealSecret()`; `secretPreview` and `hasSecret` on `Webhook`
+
+### Changed
+
+- `client.webhooks.create()` returns `CreatedWebhook`, which carries `secret`. `list()` and
+  `get()` never did return a usable secret from the API: it comes back masked as
+  `secretPreview`. A secret must be 16-256 characters.
+
 ## [0.10.0] - 2026-10-28
 
 ### Added

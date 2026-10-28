@@ -1,15 +1,21 @@
 import { BaseResource } from './base.js';
-import type { Webhook, CreateWebhookInput, WebhookDelivery } from '../types/webhook.js';
+import type {
+  Webhook,
+  CreatedWebhook,
+  CreateWebhookInput,
+  WebhookDelivery,
+  WebhookSecret,
+} from '../types/webhook.js';
 
 /**
  * Webhooks resource
  */
 export class WebhooksResource extends BaseResource {
   /**
-   * Create a new webhook
+   * Create a new webhook. The response is the only one that echoes the secret.
    */
-  async create(brandId: string, data: CreateWebhookInput): Promise<Webhook> {
-    return this._post<Webhook>(`/brands/${brandId}/webhooks`, data);
+  async create(brandId: string, data: CreateWebhookInput): Promise<CreatedWebhook> {
+    return this._post<CreatedWebhook>(`/brands/${brandId}/webhooks`, data);
   }
 
   /**
@@ -24,6 +30,14 @@ export class WebhooksResource extends BaseResource {
    */
   async get(brandId: string, webhookId: string): Promise<Webhook> {
     return this._get<Webhook>(`/brands/${brandId}/webhooks/${webhookId}`);
+  }
+
+  /**
+   * Read a webhook's signing secret back. Needs an account-wide API key or an
+   * owner/admin session, and is recorded in the audit log.
+   */
+  async revealSecret(brandId: string, webhookId: string): Promise<WebhookSecret> {
+    return this._post<WebhookSecret>(`/brands/${brandId}/webhooks/${webhookId}/reveal-secret`);
   }
 
   /**

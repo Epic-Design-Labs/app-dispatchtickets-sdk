@@ -68,6 +68,8 @@ export interface TicketUpdatedData extends EventCustomerInfo {
   sourceId: string | null;
   /** Custom field values after this update */
   customFields: Record<string, unknown>;
+  /** Set when a chat was turned into an email ticket; `changes` then includes `'chatConvertedAt'` */
+  chatConvertedAt?: string | null;
   updatedAt: string;
   /** List of field names that were changed */
   changes: string[];

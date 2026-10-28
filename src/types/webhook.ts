@@ -12,8 +12,26 @@ export interface Webhook {
   failureCount: number;
   lastTriggered?: string;
   lastFailure?: string;
+  /** The signing secret with most of it masked. The secret itself is never listed. */
+  secretPreview: string;
+  hasSecret: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * A webhook as `create()` returns it: the only response, besides
+ * `revealSecret()`, that carries the signing secret.
+ */
+export interface CreatedWebhook extends Webhook {
+  secret: string;
+}
+
+/**
+ * A webhook's signing secret, from `revealSecret()`
+ */
+export interface WebhookSecret {
+  secret: string;
 }
 
 /**
@@ -21,6 +39,7 @@ export interface Webhook {
  */
 export interface CreateWebhookInput {
   url: string;
+  /** HMAC-SHA256 signing secret, 16-256 characters */
   secret: string;
   events: WebhookEventName[];
 }

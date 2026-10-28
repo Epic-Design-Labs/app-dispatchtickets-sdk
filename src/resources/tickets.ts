@@ -150,6 +150,7 @@ export class TicketsResource extends BaseResource {
     if (filters.tagIds) query.tagIds = filters.tagIds.join(',');
     if (filters.source) query.source = filters.source;
     if (filters.sourceId) query.sourceId = filters.sourceId;
+    if (filters.chatConverted !== undefined) query.chatConverted = filters.chatConverted;
     if (filters.sort) query.sort = filters.sort;
     if (filters.order) query.order = filters.order;
     if (filters.limit) query.limit = filters.limit;

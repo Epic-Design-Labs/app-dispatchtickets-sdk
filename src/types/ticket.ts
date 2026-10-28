@@ -27,6 +27,12 @@ export interface Ticket {
   source: TicketSource;
   sourceId?: string;
   sourceData?: Record<string, unknown>;
+  /**
+   * When a chat was turned into an email ticket (`client.chat.convert()`, the
+   * visitor asking for email, or the brand's auto-convert). From then on it
+   * isn't a live chat: replies go by email. Null for a live chat.
+   */
+  chatConvertedAt?: string | null;
   commentCount: number;
   attachmentCount: number;
   isSpam: boolean;
@@ -94,6 +100,8 @@ export interface ListTicketsFilters {
   source?: TicketSource;
   /** The source's own id. For a chat ticket, the chat session id. */
   sourceId?: string;
+  /** With `source: 'chat'`: `false` for live chats only, `true` for chats turned into tickets */
+  chatConverted?: boolean;
   sort?: 'createdAt' | 'updatedAt' | 'priority';
   order?: SortOrder;
   limit?: number;

@@ -40,6 +40,58 @@ export interface ChatVisitor {
    * kept, but no webhook, notification or live event fires.
    */
   blocked: boolean;
+  /**
+   * Once the chat is a ticket and the visitor's typed address was asked to
+   * confirm: where that stands. Null otherwise.
+   */
+  emailConfirmation: ChatEmailConfirmation | null;
+}
+
+/**
+ * A confirmation email sent to an address a chat visitor typed
+ */
+export interface ChatEmailConfirmation {
+  email: string;
+  sentAt: string;
+  confirmedAt: string | null;
+  /** Unconfirmed and past its 7 days */
+  expired: boolean;
+  /** `resendEmailConfirmation()` would be accepted now (max 3 sends, 10 minutes apart) */
+  canResend: boolean;
+}
+
+/**
+ * Input for turning a chat into an email ticket
+ */
+export interface ConvertChatInput {
+  /** The ticket's new subject (up to 255 characters) */
+  title: string;
+  /** What the customer needs, in your words. They see it. Up to 20,000 characters. */
+  description: string;
+  /** Saved as an internal note. Never sent. */
+  internalNote?: string;
+  /**
+   * An address you know is the customer's. Used as-is and linked as the
+   * contact. Omit it to use the verified address, or to have a typed one confirmed first.
+   */
+  email?: string;
+  /** Email the customer now (default true) */
+  notifyCustomer?: boolean;
+}
+
+/**
+ * What happened to the customer when the chat became a ticket
+ */
+export interface ConvertChatResult {
+  ticketId: string;
+  /**
+   * `emailed`: a known address got the ticket and conversation.
+   * `confirmation_sent`: a typed address was asked to confirm first; the ticket follows.
+   * `no_email`: nothing to send to; add the customer to reply by email.
+   * `not_requested`: `notifyCustomer` was false, or the customer opted out of email.
+   */
+  delivery: 'emailed' | 'confirmation_sent' | 'no_email' | 'not_requested';
+  email: string | null;
 }
 
 /**
