@@ -21,6 +21,8 @@ export interface Ticket {
   categoryId?: string;
   category?: Category;
   tags?: Tag[];
+  /** People copied on every customer email about this ticket. Email only: no portal access. */
+  cc?: string[];
   links?: Link[];
   customFields?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
@@ -54,6 +56,8 @@ export interface CreateTicketInput {
   createdBy?: string;
   categoryId?: string;
   tags?: string[];
+  /** Copied on every customer email about this ticket (max 20; the requester is dropped) */
+  cc?: string[];
   links?: Link[];
   customFields?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
@@ -74,6 +78,8 @@ export interface UpdateTicketInput {
   assigneeId?: string | null;
   categoryId?: string | null;
   tags?: string[];
+  /** Replaces the ticket's CC list; `[]` clears it */
+  cc?: string[];
   links?: Link[];
   customFields?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
