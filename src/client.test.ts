@@ -62,6 +62,25 @@ describe('DispatchTickets', () => {
     });
   });
 
+  describe('default fetch', () => {
+    it('calls the global fetch without the client as `this`', async () => {
+      // Cloudflare Workers throw "Illegal invocation" when fetch runs with any other `this`
+      const realFetch = globalThis.fetch;
+      const strictFetch = vi.fn(function (this: unknown) {
+        if (this !== undefined && this !== globalThis) throw new TypeError('Illegal invocation');
+        return Promise.resolve(new Response('[]', { status: 200, headers: { 'content-type': 'application/json' } }));
+      });
+      globalThis.fetch = strictFetch as unknown as typeof fetch;
+      try {
+        const client = new DispatchTickets({ apiKey: 'sk_test_123', maxRetries: 0 });
+        await client.brands.list();
+        expect(strictFetch).toHaveBeenCalledTimes(1);
+      } finally {
+        globalThis.fetch = realFetch;
+      }
+    });
+  });
+
   describe('static webhooks', () => {
     it('should expose webhook utilities', () => {
       expect(DispatchTickets.webhooks).toBeDefined();
