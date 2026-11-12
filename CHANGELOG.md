@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-11-12
+
+### Added
+
+- Connect to Dispatch, for third-party integrations: `connectUrl()` builds the consent link a
+  customer's admin approves (they pick the brands), `exchangeCode()` swaps the returned code
+  for tokens, and `refreshAccessToken()` rotates them. Use the access token as the client's
+  `apiKey`. Errors from the token endpoint throw `IntegrationTokenError` with the OAuth
+  `error` code.
+- `client.integrations.me()`: which account and brands an integration's token reaches.
+
 ## [0.14.0] - 2026-11-12
 
 ### Added

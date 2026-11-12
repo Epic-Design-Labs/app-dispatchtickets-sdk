@@ -18,6 +18,7 @@ import { CustomersResource } from './resources/customers.js';
 import { FieldsResource } from './resources/fields.js';
 import { ChatResource } from './resources/chat.js';
 import { EnrichmentResource } from './resources/enrichment.js';
+import { IntegrationsResource } from './resources/integrations.js';
 import { webhookUtils } from './utils/webhooks.js';
 
 /**
@@ -443,6 +444,11 @@ export class DispatchTickets {
   readonly enrichment: EnrichmentResource;
 
   /**
+   * For an integration connected with Connect to Dispatch (its access token as apiKey)
+   */
+  readonly integrations: IntegrationsResource;
+
+  /**
    * Static webhook utilities
    *
    * @example
@@ -508,5 +514,6 @@ export class DispatchTickets {
     this.fields = new FieldsResource(this.http);
     this.chat = new ChatResource(this.http);
     this.enrichment = new EnrichmentResource(this.http);
+    this.integrations = new IntegrationsResource(this.http);
   }
 }

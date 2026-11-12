@@ -46,4 +46,6 @@ export * from './types/index.js';
 
 // Utilities
 export { webhookUtils } from './utils/webhooks.js';
+export { connectUrl, exchangeCode, refreshAccessToken, IntegrationTokenError } from './oauth.js';
+export type { ConnectUrlOptions } from './oauth.js';
 export { collectAll } from './utils/pagination.js';

@@ -22,3 +22,4 @@ export * from './events.js';
 
 // Portal types
 export * from './portal.js';
+export * from './integration.js';
