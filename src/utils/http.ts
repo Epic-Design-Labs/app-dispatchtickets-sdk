@@ -204,7 +204,11 @@ export class HttpClient {
 
   constructor(config: HttpClientConfig) {
     this.config = config;
-    this.fetchFn = config.fetch ?? fetch;
+    // Never store the bare global: calling it later as this.fetchFn(...) makes
+    // `this` the HttpClient, and Cloudflare Workers (and some other edge
+    // runtimes) throw "TypeError: Illegal invocation" when fetch isn't called
+    // on the global object.
+    this.fetchFn = config.fetch ?? ((input, init) => globalThis.fetch(input, init));
 
     // Merge retry config with defaults
     this.retryConfig = {

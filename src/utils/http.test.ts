@@ -44,6 +44,29 @@ describe('HttpClient', () => {
     maxRetries: 2,
   };
 
+  describe('default fetch', () => {
+    // Cloudflare Workers throw "Illegal invocation" when the global fetch is
+    // called with any `this` but the global object. Simulate that rule.
+    it('calls the global fetch unbound, not as a method of the client', async () => {
+      const original = globalThis.fetch;
+      const mock = createMockFetch([{ status: 200, body: { ok: true } }]);
+      const strictFetch = function (this: unknown, ...args: Parameters<typeof fetch>) {
+        if (this !== undefined && this !== globalThis) {
+          throw new TypeError('Illegal invocation');
+        }
+        return mock(...args);
+      };
+      globalThis.fetch = strictFetch as typeof fetch;
+      try {
+        const client = new HttpClient(baseConfig);
+        await expect(client.request({ method: 'GET', path: '/test' })).resolves.toEqual({ ok: true });
+        expect(mock).toHaveBeenCalledTimes(1);
+      } finally {
+        globalThis.fetch = original;
+      }
+    });
+  });
+
   describe('successful requests', () => {
     it('should make a GET request', async () => {
       const mockFetch = createMockFetch([{ status: 200, body: { id: '123' } }]);

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Every call failed on Cloudflare Workers (and some other edge runtimes) with
+  `TypeError: Illegal invocation`: the client stored the global `fetch` and called it as its
+  own method. The default fetch is now called unbound. Passing `fetch` yourself still works.
+
+### Added
+
+- The brand chat settings on `UpdateBrandInput`: `chatEnabled`, `chatAllowedOrigins`,
+  `chatGreeting`, `chatOfflineMessage`, `chatEmailFollowUp`, `chatAutoConvert`,
+  `chatHoursEnabled`, `chatHours`, `chatAlertWarningSeconds`, `chatAlertCriticalSeconds`,
+  plus the `ChatEmailFollowUp` and `ChatHours` types.
+
 ## [0.12.0] - 2026-10-30
 
 ### Added
