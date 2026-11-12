@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   'expired'`) and when they come back (`'heartbeat'`). It is opt-in: a webhook subscribed to
   `'*'` does not receive it.
 - `client.webhooks.redeliver(brandId, webhookId, deliveryId)`: send a past delivery again.
+- `client.webhooks.update(brandId, webhookId, { url?, events?, enabled? })`: re-enabling an
+  auto-disabled webhook clears its failure count.
 - Chat widget buttons configured per brand: `client.chat.listActions()`, `createAction()`,
   `updateAction()`, `deleteAction()`, `rotateActionSecret()`, and the `ChatActionPayload` type
   for the signed `chat.action` call Dispatch makes when a visitor presses one.

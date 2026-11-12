@@ -6,6 +6,7 @@ import type {
   WebhookDelivery,
   WebhookRedelivery,
   WebhookSecret,
+  UpdateWebhookInput,
 } from '../types/webhook.js';
 
 /**
@@ -46,6 +47,14 @@ export class WebhooksResource extends BaseResource {
    */
   async delete(brandId: string, webhookId: string): Promise<void> {
     await this._delete<void>(`/brands/${brandId}/webhooks/${webhookId}`);
+  }
+
+  /**
+   * Change a webhook's url, events or enabled flag. Re-enabling an
+   * auto-disabled webhook clears its failure count.
+   */
+  async update(brandId: string, webhookId: string, data: UpdateWebhookInput): Promise<Webhook> {
+    return this._patch<Webhook>(`/brands/${brandId}/webhooks/${webhookId}`, data);
   }
 
   /**

@@ -62,6 +62,16 @@ export interface WebhookDelivery {
 }
 
 /**
+ * Input for updating a webhook. The secret can't be changed here: recreate the webhook.
+ */
+export interface UpdateWebhookInput {
+  url?: string;
+  events?: WebhookEventName[];
+  /** Turning it on clears the failure count, so an auto-disabled webhook starts over */
+  enabled?: boolean;
+}
+
+/**
  * Result of redelivering a webhook delivery
  */
 export interface WebhookRedelivery {
