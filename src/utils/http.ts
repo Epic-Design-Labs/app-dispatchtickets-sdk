@@ -532,7 +532,7 @@ export class HttpClient {
       case 404:
         throw new NotFoundError(message, undefined, undefined, requestId);
       case 409:
-        throw new ConflictError(message, requestId);
+        throw new ConflictError(message, requestId, errorData as Record<string, unknown>);
       case 429: {
         const retryAfter = response.headers.get('retry-after');
         throw new RateLimitError(

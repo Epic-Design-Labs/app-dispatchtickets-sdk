@@ -76,6 +76,13 @@ export interface UpdateTicketInput {
   status?: TicketStatus;
   priority?: TicketPriority;
   assigneeId?: string | null;
+  /**
+   * Claim instead of assign: set `assigneeId` only if the ticket is still
+   * unassigned (or already assigned to that same id, so a retry succeeds).
+   * Otherwise nothing in the update is applied and it throws a `ConflictError`
+   * whose `details.assigneeId` is the current assignee. Requires `assigneeId`.
+   */
+  ifUnassigned?: boolean;
   categoryId?: string | null;
   tags?: string[];
   /** Replaces the ticket's CC list; `[]` clears it */

@@ -1,3 +1,5 @@
+import type { WebhookEventType } from './events.js';
+
 /**
  * Pagination response wrapper
  */
@@ -56,19 +58,11 @@ export type AuthorType = 'CUSTOMER' | 'AGENT' | 'SYSTEM';
 export type AttachmentStatus = 'PENDING' | 'UPLOADED' | 'FAILED';
 
 /**
- * Webhook event type strings (for subscription)
- * @deprecated Use WebhookEventType from events.ts for typed event handling
+ * What a webhook can subscribe to: any event the API sends, the
+ * `comment.created` alias of `ticket.comment.created`, or `'*'` for all.
+ * The API rejects any other name on create.
  */
-export type WebhookEventName =
-  | 'ticket.created'
-  | 'ticket.updated'
-  | 'ticket.deleted'
-  | 'ticket.comment.created'
-  | 'comment.created'
-  | 'comment.updated'
-  | 'comment.deleted'
-  | 'attachment.created'
-  | 'attachment.deleted';
+export type WebhookEventName = WebhookEventType | 'comment.created' | '*';
 
 /**
  * Custom field types

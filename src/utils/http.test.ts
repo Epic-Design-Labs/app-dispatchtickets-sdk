@@ -67,6 +67,18 @@ describe('HttpClient', () => {
     });
   });
 
+  describe('conflicts', () => {
+    it('keeps the 409 body on ConflictError.details (a lost ticket claim says who holds it)', async () => {
+      const mockFetch = createMockFetch([
+        { status: 409, body: { statusCode: 409, error: 'already_assigned', message: 'Ticket is already assigned to someone else', assigneeId: 'usr_b' } },
+      ]);
+      const client = new HttpClient({ ...baseConfig, fetch: mockFetch });
+      const err = (await client.request({ method: 'PATCH', path: '/x' }).catch((e: unknown) => e)) as ConflictError;
+      expect(err).toBeInstanceOf(ConflictError);
+      expect(err.details).toMatchObject({ error: 'already_assigned', assigneeId: 'usr_b' });
+    });
+  });
+
   describe('successful requests', () => {
     it('should make a GET request', async () => {
       const mockFetch = createMockFetch([{ status: 200, body: { id: '123' } }]);

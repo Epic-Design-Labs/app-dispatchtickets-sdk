@@ -103,8 +103,13 @@ export class NotFoundError extends DispatchTicketsError {
  * Thrown when there's a conflict (e.g., duplicate resource)
  */
 export class ConflictError extends DispatchTicketsError {
-  constructor(message = 'Resource conflict', requestId?: string) {
-    super(message, 'conflict', 409, undefined, requestId);
+  /**
+   * @param details - The response body. A claim that lost
+   *   (`tickets.update(..., { assigneeId, ifUnassigned: true })`) carries
+   *   `{ error: 'already_assigned', assigneeId }` here.
+   */
+  constructor(message = 'Resource conflict', requestId?: string, details?: Record<string, unknown>) {
+    super(message, 'conflict', 409, details, requestId);
     this.name = 'ConflictError';
   }
 }

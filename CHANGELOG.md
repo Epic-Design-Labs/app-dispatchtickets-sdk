@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `chatGreeting`, `chatOfflineMessage`, `chatEmailFollowUp`, `chatAutoConvert`,
   `chatHoursEnabled`, `chatHours`, `chatAlertWarningSeconds`, `chatAlertCriticalSeconds`,
   plus the `ChatEmailFollowUp` and `ChatHours` types.
+- `ifUnassigned` on `UpdateTicketInput`: claim a ticket only if nobody holds it. A lost
+  claim throws `ConflictError`, which now carries the response body on `details`
+  (`details.assigneeId` is the current assignee).
+
+### Changed
+
+- `WebhookEventName` now lists the events the API actually sends (the same set as
+  `WebhookEventType`), plus the `comment.created` alias and `'*'`. It used to offer
+  `ticket.deleted`, `comment.updated`, `comment.deleted`, `attachment.created` and
+  `attachment.deleted`, which never fired; the API now rejects unknown names when a webhook
+  is created, so code that passed one gets a type error instead of a silent subscription.
 
 ## [0.12.0] - 2026-10-30
 
