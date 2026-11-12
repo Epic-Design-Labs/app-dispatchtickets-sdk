@@ -118,3 +118,67 @@ export interface ChatIdentityToken {
   token: string;
   expiresAt: string;
 }
+
+/**
+ * A chat widget button configured on a brand. Pressing it makes Dispatch POST a
+ * signed `chat.action` payload ({@link ChatActionPayload}) to `url`.
+ */
+export interface ChatAction {
+  id: string;
+  brandId: string;
+  /** Button text (max 40) */
+  label: string;
+  url: string;
+  enabled: boolean;
+  /** Order among the brand's buttons, lowest first */
+  position: number;
+  secretPreview: string | null;
+  hasSecret: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Returned by create and rotateSecret: the only times the signing secret is shown. */
+export interface ChatActionWithSecret extends ChatAction {
+  secret: string;
+}
+
+export interface CreateChatActionInput {
+  label: string;
+  url: string;
+  enabled?: boolean;
+  position?: number;
+}
+
+export type UpdateChatActionInput = Partial<CreateChatActionInput>;
+
+/**
+ * What Dispatch POSTs to a chat action's URL. Verify `X-Dispatch-Signature`
+ * with `DispatchTickets.webhooks.verifySignature(rawBody, header, secret)`.
+ * Reply with JSON `{ "message": "..." }` (max 200 chars) to show the visitor a
+ * line in the widget; a non-2xx reply may still carry one. 5 second budget.
+ */
+export interface ChatActionPayload {
+  /** Event id */
+  id: string;
+  event: 'chat.action';
+  brand_id: string;
+  timestamp: string;
+  data: {
+    actionId: string;
+    label: string;
+    brandId: string;
+    sessionId: string;
+    /** Null until the visitor sends a first message (that opens the ticket) */
+    ticketId: string | null;
+    ticketNumber: number | null;
+    visitor: {
+      /** 'verified' only for an identity your server vouched for (chat identity token) */
+      identity: 'verified' | 'anonymous';
+      externalUserId: string | null;
+      email: string | null;
+      name: string | null;
+      pageUrl: string | null;
+    };
+  };
+}

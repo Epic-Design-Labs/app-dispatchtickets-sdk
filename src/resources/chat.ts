@@ -5,6 +5,10 @@ import type {
   ChatIdentityToken,
   ConvertChatInput,
   ConvertChatResult,
+  ChatAction,
+  ChatActionWithSecret,
+  CreateChatActionInput,
+  UpdateChatActionInput,
 } from '../types/chat.js';
 
 /**
@@ -79,5 +83,32 @@ export class ChatResource extends BaseResource {
     return this._post<{ email: string }>(
       `/brands/${brandId}/tickets/${ticketId}/chat/email-confirmation/resend`
     );
+  }
+
+  /** The brand's chat widget buttons (secrets masked) */
+  async listActions(brandId: string): Promise<ChatAction[]> {
+    return this._get<ChatAction[]>(`/brands/${brandId}/chat/actions`);
+  }
+
+  /**
+   * Add a chat widget button (max 3 per brand). The widget shows it with no code
+   * on your site; pressing it POSTs a signed `ChatActionPayload` to `url`.
+   * The returned `secret` is shown only here and on `rotateActionSecret()`.
+   */
+  async createAction(brandId: string, data: CreateChatActionInput): Promise<ChatActionWithSecret> {
+    return this._post<ChatActionWithSecret>(`/brands/${brandId}/chat/actions`, data);
+  }
+
+  async updateAction(brandId: string, actionId: string, data: UpdateChatActionInput): Promise<ChatAction> {
+    return this._patch<ChatAction>(`/brands/${brandId}/chat/actions/${actionId}`, data);
+  }
+
+  async deleteAction(brandId: string, actionId: string): Promise<{ success: boolean }> {
+    return this._delete<{ success: boolean }>(`/brands/${brandId}/chat/actions/${actionId}`);
+  }
+
+  /** New signing secret (returned once) */
+  async rotateActionSecret(brandId: string, actionId: string): Promise<ChatActionWithSecret> {
+    return this._post<ChatActionWithSecret>(`/brands/${brandId}/chat/actions/${actionId}/rotate-secret`);
   }
 }
