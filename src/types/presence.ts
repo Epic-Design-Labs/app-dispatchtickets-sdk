@@ -22,7 +22,7 @@ export interface PresenceEntry {
   online: boolean;
   /** Conversations this member can hold at once */
   maxConcurrent: number;
-  /** Conversations this member is holding now */
+  /** Live chats on this brand assigned to the member, counted by Dispatch */
   activeCount: number;
   /** Available, with room for another conversation */
   hasCapacity: boolean;
@@ -39,7 +39,10 @@ export interface SetPresenceInput {
   status: PresenceStatus;
   /** Conversations this member can hold at once (0-100) */
   maxConcurrent?: number;
-  /** Conversations this member is holding now */
+  /**
+   * @deprecated Ignored since 0.14.0: Dispatch counts the live chats assigned to the
+   * member itself, and returns that as `activeCount`.
+   */
   activeCount?: number;
   /**
    * Seconds the status holds without being set again (30-86400). A status

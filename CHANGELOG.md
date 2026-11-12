@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-11-12
+
+### Added
+
+- `presence.updated` webhook event: `PresenceUpdatedData`, `PresenceUpdatedEvent`,
+  `isPresenceUpdatedEvent()`, and `parseWebhookEvent()` accepts it. It fires when a member's
+  effective status on a brand changes, including when their heartbeat lapses (`reason:
+  'expired'`) and when they come back (`'heartbeat'`). It is opt-in: a webhook subscribed to
+  `'*'` does not receive it.
+- `client.webhooks.redeliver(brandId, webhookId, deliveryId)`: send a past delivery again.
+
+### Changed
+
+- `activeCount` on presence is now counted by Dispatch (live chats assigned to the member on
+  that brand). `SetPresenceInput.activeCount` is deprecated and ignored.
+
 ## [0.13.0] - 2026-11-12
 
 ### Fixed

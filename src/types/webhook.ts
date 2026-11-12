@@ -60,3 +60,16 @@ export interface WebhookDelivery {
   error?: string;
   createdAt: string;
 }
+
+/**
+ * Result of redelivering a webhook delivery
+ */
+export interface WebhookRedelivery {
+  /** The new delivery's id */
+  id: string;
+  event: WebhookEventName;
+  status: 'PENDING';
+  createdAt: string;
+  /** The delivery it repeats */
+  redeliveryOf: string;
+}

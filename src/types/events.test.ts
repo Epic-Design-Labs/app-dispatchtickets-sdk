@@ -286,3 +286,27 @@ describe('SLA events', () => {
     if (isTicketAwaitingReplyEvent(waiting)) expect(waiting.data.level).toBe('critical');
   });
 });
+
+describe('presence.updated', () => {
+  it('parses and narrows', async () => {
+    const { isPresenceUpdatedEvent } = await import('./events.js');
+    const event = parseWebhookEvent({
+      id: 'evt_1',
+      event: 'presence.updated',
+      timestamp: '2026-11-12T00:00:00Z',
+      data: {
+        brandId: 'ws_1',
+        memberId: 'usr_1',
+        status: 'offline',
+        intendedStatus: 'available',
+        maxConcurrent: 2,
+        activeCount: 1,
+        hasCapacity: false,
+        expiresAt: '2026-11-12T00:00:00Z',
+        reason: 'expired',
+      },
+    });
+    expect(isPresenceUpdatedEvent(event)).toBe(true);
+    if (isPresenceUpdatedEvent(event)) expect(event.data.reason).toBe('expired');
+  });
+});

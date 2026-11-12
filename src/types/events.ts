@@ -10,7 +10,8 @@ export type WebhookEventType =
   | 'ticket.overdue'
   | 'ticket.awaiting_reply'
   | 'chat.started'
-  | 'chat.message';
+  | 'chat.message'
+  | 'presence.updated';
 
 /**
  * Base webhook event envelope
@@ -174,6 +175,27 @@ export interface ChatMessageData {
 }
 
 /**
+ * Payload for presence.updated: a member's effective status on a brand changed.
+ * Opt-in: a webhook subscribed to '*' does not receive it; name it explicitly.
+ */
+export interface PresenceUpdatedData {
+  brandId: string;
+  /** Local User id (what a ticket's assigneeId takes) */
+  memberId: string;
+  /** What routing should use: offline once the heartbeat lapsed */
+  status: 'available' | 'busy' | 'away' | 'offline';
+  /** What the member last chose */
+  intendedStatus: 'available' | 'busy' | 'away' | 'offline';
+  maxConcurrent: number;
+  /** Live chats on this brand assigned to the member, counted by Dispatch */
+  activeCount: number;
+  hasCapacity: boolean;
+  expiresAt: string;
+  /** set = a status write; heartbeat = a lapsed member came back; expired = the heartbeat lapsed */
+  reason: 'set' | 'heartbeat' | 'expired';
+}
+
+/**
  * Ticket created webhook event
  */
 export type TicketCreatedEvent = WebhookEventEnvelope<'ticket.created', TicketCreatedData>;
@@ -209,6 +231,11 @@ export type ChatStartedEvent = WebhookEventEnvelope<'chat.started', ChatStartedD
 export type ChatMessageEvent = WebhookEventEnvelope<'chat.message', ChatMessageData>;
 
 /**
+ * Presence updated webhook event (opt-in)
+ */
+export type PresenceUpdatedEvent = WebhookEventEnvelope<'presence.updated', PresenceUpdatedData>;
+
+/**
  * Union of all webhook events
  */
 export type WebhookEvent =
@@ -218,7 +245,8 @@ export type WebhookEvent =
   | TicketOverdueEvent
   | TicketAwaitingReplyEvent
   | ChatStartedEvent
-  | ChatMessageEvent;
+  | ChatMessageEvent
+  | PresenceUpdatedEvent;
 
 /**
  * Map of event types to their data types
@@ -231,6 +259,7 @@ export interface WebhookEventMap {
   'ticket.awaiting_reply': TicketAwaitingReplyEvent;
   'chat.started': ChatStartedEvent;
   'chat.message': ChatMessageEvent;
+  'presence.updated': PresenceUpdatedEvent;
 }
 
 /**
@@ -283,6 +312,13 @@ export function isChatMessageEvent(event: WebhookEvent): event is ChatMessageEve
 }
 
 /**
+ * Type guard to check if event is a presence.updated event
+ */
+export function isPresenceUpdatedEvent(event: WebhookEvent): event is PresenceUpdatedEvent {
+  return event.event === 'presence.updated';
+}
+
+/**
  * Parse and validate a webhook payload
  *
  * @param payload - Raw JSON payload string or parsed object
@@ -329,6 +365,7 @@ export function parseWebhookEvent(payload: string | object): WebhookEvent {
     'ticket.awaiting_reply',
     'chat.started',
     'chat.message',
+    'presence.updated',
   ];
   if (!validEvents.includes(event.event)) {
     throw new Error(`Invalid webhook payload: unknown event type "${event.event}"`);

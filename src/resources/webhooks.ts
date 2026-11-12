@@ -4,6 +4,7 @@ import type {
   CreatedWebhook,
   CreateWebhookInput,
   WebhookDelivery,
+  WebhookRedelivery,
   WebhookSecret,
 } from '../types/webhook.js';
 
@@ -53,6 +54,16 @@ export class WebhooksResource extends BaseResource {
   async getDeliveries(brandId: string, webhookId: string): Promise<WebhookDelivery[]> {
     return this._get<WebhookDelivery[]>(
       `/brands/${brandId}/webhooks/${webhookId}/deliveries`
+    );
+  }
+
+  /**
+   * Send a past delivery again: same payload and event `id` (so you can dedupe),
+   * as a new delivery with the full retry schedule. Works on a disabled webhook.
+   */
+  async redeliver(brandId: string, webhookId: string, deliveryId: string): Promise<WebhookRedelivery> {
+    return this._post<WebhookRedelivery>(
+      `/brands/${brandId}/webhooks/${webhookId}/deliveries/${deliveryId}/redeliver`
     );
   }
 }
